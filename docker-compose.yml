@@ -1,0 +1,17 @@
+name: waverify
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked in at build time: Next.js inlines NEXT_PUBLIC_* into the
+        # client bundle, so this cannot be supplied at runtime.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
