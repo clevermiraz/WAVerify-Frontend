@@ -8,6 +8,11 @@ import { useForm } from "react-hook-form";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { FormError } from "@/components/auth/form-error";
+import {
+  AuthDivider,
+  GoogleButton,
+  isGoogleLoginEnabled,
+} from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -72,6 +77,13 @@ export function RegisterForm() {
     >
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <FormError message={formError} />
+
+        {isGoogleLoginEnabled && (
+          <div className="space-y-4">
+            <GoogleButton text="signup_with" onError={setFormError} />
+            <AuthDivider />
+          </div>
+        )}
 
         <Field
           label="Full name"

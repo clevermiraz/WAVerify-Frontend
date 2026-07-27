@@ -1,11 +1,12 @@
 const SECTIONS = [
-  { id: "quickstart", label: "Quickstart" },
-  { id: "authentication", label: "Authentication" },
+  { id: "quickstart", label: "Start here" },
+  { id: "base-url", label: "Base URL" },
+  { id: "authentication", label: "Your API key" },
   { id: "check", label: "Check a number" },
-  { id: "responses", label: "Responses" },
+  { id: "responses", label: "What you get back" },
   { id: "errors", label: "Errors" },
-  { id: "rate-limits", label: "Rate limits" },
-  { id: "openapi", label: "OpenAPI schema" },
+  { id: "rate-limits", label: "Limits" },
+  { id: "help", label: "Need help?" },
 ];
 
 /** Sticky in-page table of contents. Hidden below `lg` to keep mobile clean. */

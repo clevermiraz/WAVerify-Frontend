@@ -211,7 +211,7 @@ export function BillingView() {
                       size="sm"
                       className="mt-5 w-full"
                     >
-                      <a href="mailto:sales@waverify.dev?subject=WAVerify%20Enterprise">
+                      <a href="mailto:sales@waverify.app?subject=WAVerify%20Enterprise">
                         Contact Sales
                       </a>
                     </Button>

@@ -18,6 +18,8 @@ interface AuthContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User>;
+  /** Sign in (or sign up) with a Google ID token from Identity Services. */
+  loginWithGoogle: (credential: string) => Promise<User>;
   register: (payload: {
     email: string;
     password: string;
@@ -91,6 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [applyAuth]
   );
 
+  const loginWithGoogle = React.useCallback(
+    async (credential: string) =>
+      applyAuth(await authService.google(credential)),
+    [applyAuth]
+  );
+
   const register = React.useCallback(
     async (payload: {
       email: string;
@@ -111,6 +119,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     tokenStore.clear();
     setUser(null);
     queryClient.clear();
+    // Without this, Google Identity Services may silently re-authenticate on
+    // the very next page — signing out has to actually stick.
+    window.google?.accounts.id.disableAutoSelect();
     router.push("/login");
   }, [queryClient, router]);
 
@@ -124,12 +135,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       isAuthenticated: user !== null,
       login,
+      loginWithGoogle,
       register,
       logout,
       refreshUser,
       setUser,
     }),
-    [user, isLoading, login, register, logout, refreshUser]
+    [user, isLoading, login, loginWithGoogle, register, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

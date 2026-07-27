@@ -95,7 +95,7 @@ export function Pricing() {
                       <Link
                         href={
                           plan.is_contact_sales
-                            ? "mailto:sales@waverify.dev?subject=WAVerify%20Enterprise"
+                            ? "mailto:sales@waverify.app?subject=WAVerify%20Enterprise"
                             : "/register"
                         }
                       >

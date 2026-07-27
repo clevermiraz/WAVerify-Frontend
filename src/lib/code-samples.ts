@@ -2,7 +2,10 @@
 
 import type { CodeSample } from "@/components/docs/code-tabs";
 
-const ENDPOINT = "https://api.waverify.dev/api/v1/check";
+/** Public address of the API. Every documented path hangs off this. */
+export const API_BASE_URL = "https://api.waverify.app";
+
+const ENDPOINT = `${API_BASE_URL}/api/v1/check`;
 
 export const CHECK_SAMPLES: CodeSample[] = [
   {
@@ -91,7 +94,7 @@ export const SUCCESS_RESPONSE = `{
   "display_name": "John Doe",
   "about": "Software Engineer",
   "business": false,
-  "profile_photo": "https://cdn.waverify.dev/p/9f2c.jpg",
+  "profile_photo": "https://cdn.waverify.app/p/9f2c.jpg",
   "response_time_ms": 214,
   "cached": false,
   "checked_at": "2026-07-23T10:04:11Z"
@@ -123,52 +126,55 @@ export const RESPONSE_FIELDS = [
   {
     name: "success",
     type: "boolean",
-    description: "Always true for a 2xx response.",
+    description: "Always true when the request worked.",
   },
   {
     name: "phone",
     type: "string",
-    description: "The number, normalised to E.164.",
+    description:
+      "The number you sent, rewritten in the standard international format.",
   },
   {
     name: "exists",
     type: "boolean",
-    description: "Whether the number has a WhatsApp account.",
+    description: "true if this number has a WhatsApp account.",
   },
   {
     name: "display_name",
     type: "string | null",
-    description: "Public display name, when the account publishes one.",
+    description: "The name on the account. null if the account hides it.",
   },
   {
     name: "about",
     type: "string | null",
-    description: "The account's about/status text, when public.",
+    description:
+      "The short “about” text on the account. null if the account hides it.",
   },
   {
     name: "business",
     type: "boolean",
-    description: "True for WhatsApp Business accounts.",
+    description: "true if this is a WhatsApp Business account.",
   },
   {
     name: "profile_photo",
     type: "string | null",
-    description: "URL of the profile photo, when publicly available.",
+    description: "Link to the profile picture. null if the account hides it.",
   },
   {
     name: "response_time_ms",
     type: "integer",
-    description: "Server-side processing time for this lookup.",
+    description: "How long the check took on our server, in milliseconds.",
   },
   {
     name: "cached",
     type: "boolean",
-    description: "True when served from the recent-result cache.",
+    description:
+      "true if we answered from a saved recent result instead of checking again.",
   },
   {
     name: "checked_at",
     type: "string",
-    description: "ISO 8601 timestamp of the lookup.",
+    description: "Date and time of the check, in UTC.",
   },
 ];
 
@@ -176,33 +182,32 @@ export const ERROR_CODES = [
   {
     status: "401",
     code: "authentication_failed",
-    description: "The API key is missing, malformed or revoked.",
+    description: "Your API key is missing, wrong, or was deleted.",
   },
   {
     status: "402",
     code: "quota_exceeded",
-    description: "The plan's monthly request allowance is used up.",
+    description: "You have used all the requests in your plan this month.",
   },
   {
     status: "403",
     code: "email_not_verified",
-    description: "The account's email address has not been confirmed.",
+    description: "You have not confirmed your email address yet.",
   },
   {
     status: "422",
     code: "validation_error",
-    description:
-      "The phone number is missing, malformed or not a valid number.",
+    description: "The phone number is missing, or it is not a real number.",
   },
   {
     status: "429",
     code: "rate_limit_exceeded",
-    description: "Too many requests in the current minute for this plan.",
+    description: "You sent too many requests in one minute. Wait, then retry.",
   },
   {
     status: "502",
     code: "provider_error",
     description:
-      "The upstream verification provider is temporarily unavailable.",
+      "Our WhatsApp connection is down right now. Please try again soon.",
   },
 ];

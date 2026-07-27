@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { MailCheck, MailWarning, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -206,6 +207,7 @@ function EmailSection() {
 }
 
 function PasswordSection() {
+  const { user } = useAuth();
   const {
     register,
     handleSubmit,
@@ -239,6 +241,32 @@ function PasswordSection() {
       toastApiError(error);
     },
   });
+
+  // A Google-only account has no password to change. Offer the reset flow
+  // instead, which is how such a user sets a first one.
+  if (user && !user.has_password) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Password</CardTitle>
+          <CardDescription>
+            You sign in with Google, so there&apos;s no password on this
+            account.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <p className="text-muted-foreground text-sm">
+            Want to sign in with an email and password as well? Use the
+            password reset link — it lets you set one for the first time.
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <Link href="/forgot-password">Set a password</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -316,6 +344,10 @@ function DangerZone() {
     defaultValues: { password: "" },
   });
 
+  // Google-only accounts have nothing to type here; the backend accepts the
+  // deletion on the strength of the access token alone.
+  const requiresPassword = user?.has_password !== false;
+
   const mutation = useMutation({
     mutationFn: (values: DeleteAccountInput) =>
       userService.remove(values.password),
@@ -331,6 +363,15 @@ function DangerZone() {
       }
       toastApiError(error);
     },
+  });
+
+  const onSubmit = handleSubmit((values) => {
+    // Required-ness depends on the account, which the schema cannot see.
+    if (requiresPassword && !values.password) {
+      setError("password", { message: "Enter your password to confirm." });
+      return;
+    }
+    mutation.mutate(values);
   });
 
   return (
@@ -382,22 +423,20 @@ function DangerZone() {
             </AlertDescription>
           </Alert>
 
-          <form
-            onSubmit={handleSubmit((values) => mutation.mutate(values))}
-            className="space-y-4"
-            noValidate
-          >
-            <Field
-              label="Confirm with your password"
-              htmlFor="delete-password"
-              error={errors.password?.message}
-            >
-              <Input
-                type="password"
-                autoComplete="current-password"
-                {...register("password")}
-              />
-            </Field>
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
+            {requiresPassword && (
+              <Field
+                label="Confirm with your password"
+                htmlFor="delete-password"
+                error={errors.password?.message}
+              >
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  {...register("password")}
+                />
+              </Field>
+            )}
 
             <DialogFooter>
               <Button

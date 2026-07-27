@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
+import { SITE_URL } from "@/lib/site";
 
 import "./globals.css";
 
@@ -12,6 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Without this, every relative URL in `openGraph`/`alternates` resolves
+  // against localhost in production and social previews break.
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "WAVerify — Verify WhatsApp Numbers Instantly",
     template: "%s · WAVerify",
@@ -19,11 +23,20 @@ export const metadata: Metadata = {
   description:
     "Fast, reliable WhatsApp number verification for developers and businesses. Clean REST API, generous free tier.",
   keywords: ["WhatsApp", "phone verification", "number lookup", "REST API"],
+  alternates: { canonical: "/" },
   openGraph: {
     title: "WAVerify — Verify WhatsApp Numbers Instantly",
     description:
       "Fast, reliable WhatsApp number verification for developers and businesses.",
+    url: "/",
+    siteName: "WAVerify",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WAVerify — Verify WhatsApp Numbers Instantly",
+    description:
+      "Fast, reliable WhatsApp number verification for developers and businesses.",
   },
 };
 

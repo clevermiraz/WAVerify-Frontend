@@ -17,6 +17,19 @@ export const authService = {
   login: (payload: { email: string; password: string }) =>
     api.post<AuthResponse>("/auth/login", payload, { anonymous: true }),
 
+  /**
+   * Exchange a Google ID token for a WAVerify session.
+   *
+   * `credential` is passed through untouched — it is verified server-side
+   * against Google's keys, so decoding it here would prove nothing.
+   */
+  google: (credential: string) =>
+    api.post<AuthResponse>(
+      "/auth/google",
+      { credential },
+      { anonymous: true }
+    ),
+
   logout: (refreshToken: string) =>
     api.post<MessageResponse>("/auth/logout", { refresh_token: refreshToken }),
 

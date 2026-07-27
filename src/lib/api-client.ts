@@ -9,8 +9,17 @@
 
 import type { ApiErrorBody, TokenPair } from "@/types/api";
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+/**
+ * Origin of the API, without a path. The `/api/v1` prefix belongs to this
+ * client rather than to the environment: the request/response types in
+ * `@/types/api` are written against v1, so a deployment cannot move to another
+ * version by changing configuration alone.
+ */
+export const API_ORIGIN = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+).replace(/\/+$/, "");
+
+export const API_URL = `${API_ORIGIN}/api/v1`;
 
 const ACCESS_TOKEN_KEY = "waverify.access_token";
 const REFRESH_TOKEN_KEY = "waverify.refresh_token";
@@ -77,24 +86,54 @@ export function setSessionExpiredHandler(handler: SessionExpiredHandler) {
 
 let refreshInFlight: Promise<string | null> | null = null;
 
+const REFRESH_LOCK = "waverify.token-refresh";
+
+/**
+ * Serialise refreshes across every tab on this origin.
+ *
+ * The in-process `refreshInFlight` only dedupes within one document. Refresh
+ * tokens are rotated and the presented one is revoked server-side, so two tabs
+ * refreshing at once would have the loser replay a burned token and be signed
+ * out mid-session. Web Locks is the only cross-document mutex available; where
+ * it is missing the old single-tab behaviour is the fallback.
+ */
+async function withRefreshLock(
+  run: () => Promise<string | null>
+): Promise<string | null> {
+  if (typeof navigator === "undefined" || !navigator.locks) return run();
+  // `LockGrantedCallback<T>` is typed as returning `T` rather than
+  // `T | PromiseLike<T>`, so the call is seen as `Promise<Promise<…>>`.
+  // Awaiting collapses it, which is what happens at runtime anyway.
+  return await navigator.locks.request(REFRESH_LOCK, run);
+}
+
 async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = tokenStore.getRefresh();
-  if (!refreshToken) return null;
+  const presentedToken = tokenStore.getRefresh();
+  if (!presentedToken) return null;
 
   refreshInFlight ??= (async () => {
     try {
-      const response = await fetch(`${API_URL}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refreshToken }),
+      return await withRefreshLock(async () => {
+        // Whoever held the lock before us may have already rotated the pair.
+        // localStorage is shared, so their result is visible here: adopt it
+        // instead of replaying a token the server has now revoked.
+        const current = tokenStore.getRefresh();
+        if (!current) return null;
+        if (current !== presentedToken) return tokenStore.getAccess();
+
+        const response = await fetch(`${API_URL}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: current }),
+        });
+        if (!response.ok) {
+          tokenStore.clear();
+          return null;
+        }
+        const tokens = (await response.json()) as TokenPair;
+        tokenStore.set(tokens);
+        return tokens.access_token;
       });
-      if (!response.ok) {
-        tokenStore.clear();
-        return null;
-      }
-      const tokens = (await response.json()) as TokenPair;
-      tokenStore.set(tokens);
-      return tokens.access_token;
     } catch {
       return null;
     } finally {
@@ -115,8 +154,30 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
   /** Skip the Authorization header (public endpoints). */
   anonymous?: boolean;
+  /**
+   * Per-attempt deadline in milliseconds.
+   *
+   * Prefer this over passing `signal: AbortSignal.timeout(...)`: a signal
+   * created by the caller is already counting down, so the retry that follows
+   * a token refresh would inherit an all-but-expired deadline and abort
+   * immediately. A fresh one is minted for each attempt.
+   */
+  timeoutMs?: number;
   /** Internal: prevents infinite refresh recursion. */
   _retried?: boolean;
+}
+
+/** Combine the caller's signal (if any) with this attempt's timeout. */
+function attemptSignal(
+  external: AbortSignal | null | undefined,
+  timeoutMs: number | undefined
+): AbortSignal | undefined {
+  if (!timeoutMs) return external ?? undefined;
+  const timeout = AbortSignal.timeout(timeoutMs);
+  if (!external) return timeout;
+  return typeof AbortSignal.any === "function"
+    ? AbortSignal.any([external, timeout])
+    : timeout;
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
@@ -141,7 +202,7 @@ async function toApiError(response: Response): Promise<ApiError> {
 
 export async function apiRequest<T>(
   path: string,
-  { body, anonymous, _retried, headers, ...init }: RequestOptions = {}
+  { body, anonymous, timeoutMs, _retried, headers, ...init }: RequestOptions = {}
 ): Promise<T> {
   const requestHeaders = new Headers(headers);
   if (body !== undefined && !(body instanceof FormData)) {
@@ -157,14 +218,19 @@ export async function apiRequest<T>(
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...init,
+      signal: attemptSignal(init.signal, timeoutMs),
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-  } catch {
+  } catch (error) {
+    const timedOut =
+      error instanceof DOMException && error.name === "TimeoutError";
     throw new ApiError(
       0,
-      "network_error",
-      "Could not reach the server. Check your connection and try again."
+      timedOut ? "timeout" : "network_error",
+      timedOut
+        ? "The server took too long to respond. Please try again."
+        : "Could not reach the server. Check your connection and try again."
     );
   }
 
@@ -175,6 +241,7 @@ export async function apiRequest<T>(
         body,
         anonymous,
         headers,
+        timeoutMs,
         ...init,
         _retried: true,
       });

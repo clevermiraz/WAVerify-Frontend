@@ -16,6 +16,9 @@ export interface User {
   is_email_verified: boolean;
   created_at: string;
   last_login_at: string | null;
+  /** False for Google-only accounts, which have no password to change. */
+  has_password: boolean;
+  has_google: boolean;
 }
 
 export interface TokenPair {

@@ -36,12 +36,7 @@ import type {
 export { authService } from "./auth";
 
 export const verificationService = {
-  check: (phone: string) =>
-    api.post<CheckResult>(
-      "/check",
-      { phone },
-      { signal: AbortSignal.timeout(10000) }
-    ),
+  check: (phone: string) => api.post<CheckResult>("/check", { phone }, { timeoutMs: 10_000 }),
 
   history: (params: {
     page?: number;
@@ -76,8 +71,10 @@ export const billingService = {
 export const userService = {
   update: (payload: { full_name?: string; company?: string }) =>
     api.patch<User>("/users/me", payload),
-  remove: (password: string) =>
-    api.post<void>("/users/me/delete", { password }),
+  // `password` is omitted for Google-only accounts, which have none; the
+  // access token is the only credential such a user can present.
+  remove: (password?: string) =>
+    api.post<void>("/users/me/delete", { password: password || null }),
 };
 
 export const adminService = {

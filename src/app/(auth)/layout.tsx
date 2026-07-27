@@ -22,7 +22,7 @@ export default function AuthLayout({
 
       <footer className="text-muted-foreground px-6 py-6 text-center text-xs">
         <Link href="/" className="hover:text-foreground transition-colors">
-          ← Back to waverify.dev
+          ← Back to waverify.app
         </Link>
       </footer>
     </div>

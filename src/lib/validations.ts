@@ -51,8 +51,13 @@ export const profileSchema = z.object({
   company: z.string().max(150).optional(),
 });
 
+/**
+ * Password is optional at the schema level because a Google-only account has
+ * none. The form requires it when the account actually has a password —
+ * conditional on data the schema cannot see.
+ */
 export const deleteAccountSchema = z.object({
-  password: z.string().min(1, "Enter your password to confirm."),
+  password: z.string().optional(),
 });
 
 export const apiKeySchema = z.object({

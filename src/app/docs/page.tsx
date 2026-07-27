@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  API_BASE_URL,
   CHECK_SAMPLES,
   ERROR_CODES,
   ERROR_RESPONSE,
@@ -28,7 +29,7 @@ import {
 export const metadata: Metadata = {
   title: "API Documentation",
   description:
-    "REST API reference for WAVerify: authenticate, check a number, and handle errors.",
+    "How to use the WAVerify API: get a key, check a phone number, and understand the answer.",
 };
 
 export default function DocsPage() {
@@ -48,40 +49,67 @@ export default function DocsPage() {
               API Documentation
             </h1>
             <p className="text-muted-foreground mt-4 text-lg leading-relaxed">
-              One endpoint, predictable JSON, and errors you can branch on.
+              You send a phone number. We tell you if it has a WhatsApp
+              account. That is the whole API.
             </p>
           </header>
 
-          <Section id="quickstart" title="Quickstart">
-            <p>
-              Create an account, generate an API key in the dashboard, then make
-              your first request. Every call needs a key — there is no
-              unauthenticated tier.
+          <Section id="quickstart" title="Start here">
+            <p>Three steps to your first result:</p>
+            <ol className="mt-4 ml-5 list-decimal space-y-2">
+              <li>Create a free account.</li>
+              <li>Make an API key in your dashboard.</li>
+              <li>Send your first request.</li>
+            </ol>
+            <p className="mt-4">
+              Every request needs an API key. There is no way to use the API
+              without one.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Button asChild size="sm">
                 <Link href="/register">Create an account</Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link href="/dashboard/api-keys">Generate a key</Link>
+                <Link href="/dashboard/api-keys">Make a key</Link>
               </Button>
             </div>
           </Section>
 
-          <Section id="authentication" title="Authentication">
+          <Section id="base-url" title="Base URL">
+            <p>Send all requests to this address:</p>
+            <CodeBlock className="mt-5" code={API_BASE_URL} />
+            <p className="mt-4">
+              Add the path to the end. For example, the check endpoint is{" "}
+              <Code>{`${API_BASE_URL}/api/v1/check`}</Code>.
+            </p>
+            <p className="mt-4">
+              Always use <Code>https</Code>. Plain <Code>http</Code> does not
+              work.
+            </p>
+          </Section>
+
+          <Section id="authentication" title="Your API key">
             <p>
-              Pass your key in the <Code>X-API-Key</Code> header. Keys are shown
-              once at creation and stored only as a hash, so keep them in an
-              environment variable and never commit them.
+              Send your key in a header called <Code>X-API-Key</Code>:
             </p>
             <CodeBlock
               className="mt-5"
               code={`X-API-Key: wav_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
             />
             <p className="mt-4">
-              Dashboard sessions use a short-lived Bearer access token instead.
-              Both credentials reach the same endpoint; the API records which
-              one made each request.
+              You see the full key only once — when you create it. We do not
+              keep a copy, so we cannot show it to you again. Save it somewhere
+              safe straight away.
+            </p>
+            <p className="mt-4">
+              Keep the key in an environment variable. Do not write it directly
+              in your code, and do not upload it to GitHub. If someone else
+              gets your key, delete it in the dashboard and make a new one.
+            </p>
+            <p className="mt-4">
+              If you are signed in to the dashboard, your session uses a
+              short-lived Bearer token instead of a key. Both work on the same
+              endpoint. We record which one you used for each request.
             </p>
           </Section>
 
@@ -91,12 +119,16 @@ export default function DocsPage() {
               <Code>/api/v1/check</Code>
             </p>
             <p className="mt-4">
-              Send a phone number in international format. Spaces, dashes and
-              brackets are accepted and stripped; a number without a country
-              code is rejected rather than guessed at.
+              Send one phone number. Write it in international format: a{" "}
+              <Code>+</Code> sign, then the country code, then the number.
+            </p>
+            <p className="mt-4">
+              Spaces, dashes and brackets are fine — we remove them for you. A
+              number without a country code is rejected. We never guess the
+              country.
             </p>
 
-            <h3 className="mt-8 mb-3 font-medium">Request body</h3>
+            <h3 className="mt-8 mb-3 font-medium">What you send</h3>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -112,7 +144,8 @@ export default function DocsPage() {
                     string
                   </TableCell>
                   <TableCell className="text-sm">
-                    Required. E.164 format, e.g. <Code>+8801712345678</Code>.
+                    Required. International format, for example{" "}
+                    <Code>+8801712345678</Code>.
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -122,18 +155,21 @@ export default function DocsPage() {
             <CodeTabs samples={CHECK_SAMPLES} />
           </Section>
 
-          <Section id="responses" title="Responses">
-            <h3 className="mb-3 font-medium">Number found</h3>
+          <Section id="responses" title="What you get back">
+            <h3 className="mb-3 font-medium">The number is on WhatsApp</h3>
             <CodeBlock code={SUCCESS_RESPONSE} language="200 OK" />
 
-            <h3 className="mt-8 mb-3 font-medium">Number not on WhatsApp</h3>
+            <h3 className="mt-8 mb-3 font-medium">
+              The number is not on WhatsApp
+            </h3>
             <p className="mb-3">
-              A number with no account is still a successful lookup — it returns
-              200 with <Code>exists: false</Code>, and it consumes one request.
+              This is still a successful request. You get status{" "}
+              <Code>200</Code> with <Code>exists: false</Code>, and it uses one
+              request from your monthly total.
             </p>
             <CodeBlock code={NOT_FOUND_RESPONSE} language="200 OK" />
 
-            <h3 className="mt-8 mb-3 font-medium">Response fields</h3>
+            <h3 className="mt-8 mb-3 font-medium">Fields in the answer</h3>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -162,8 +198,9 @@ export default function DocsPage() {
 
           <Section id="errors" title="Errors">
             <p>
-              Every non-2xx response uses the same envelope, so you can branch
-              on <Code>error.code</Code> without parsing prose.
+              Every error looks the same. In your code, check{" "}
+              <Code>error.code</Code>. Do not check the message text — the
+              wording can change, but the code will not.
             </p>
             <CodeBlock
               className="mt-5"
@@ -171,13 +208,13 @@ export default function DocsPage() {
               language="402 Payment Required"
             />
 
-            <h3 className="mt-8 mb-3 font-medium">Error codes</h3>
+            <h3 className="mt-8 mb-3 font-medium">List of error codes</h3>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Status</TableHead>
                   <TableHead>Code</TableHead>
-                  <TableHead>Meaning</TableHead>
+                  <TableHead>What it means</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -198,29 +235,50 @@ export default function DocsPage() {
             </Table>
           </Section>
 
-          <Section id="rate-limits" title="Rate limits">
+          <Section id="rate-limits" title="Limits">
+            <p>There are two separate limits. Please plan for both.</p>
+
+            <h3 className="mt-6 mb-3 font-medium">1. Requests per minute</h3>
             <p>
-              Limits are per minute and set by your plan: 10 on Free, 60 on
-              Starter, 300 on Pro, and custom on Enterprise. Exceeding one
-              returns <Code>429</Code> with the <Code>rate_limit_exceeded</Code>{" "}
-              code — back off and retry.
+              Free: 10. Starter: 60. Pro: 300. Enterprise: your own limit.
             </p>
-            <p className="mt-4">
-              Separately, each plan has a monthly request quota. Repeat lookups
-              of the same number inside the cache window are marked{" "}
-              <Code>cached: true</Code> and still count towards it.
+            <p className="mt-3">
+              If you go over, you get status <Code>429</Code> with the code{" "}
+              <Code>rate_limit_exceeded</Code>. Wait a short time, then send the
+              request again.
+            </p>
+
+            <h3 className="mt-6 mb-3 font-medium">2. Requests per month</h3>
+            <p>
+              Each plan includes a number of requests per month. When you use
+              them all, you get status <Code>402</Code> with the code{" "}
+              <Code>quota_exceeded</Code>. You can upgrade your plan at any
+              time.
+            </p>
+            <p className="mt-3">
+              If you check the same number twice in a short time, the second
+              answer comes from our saved results and is marked{" "}
+              <Code>cached: true</Code>. It is faster, but it still counts
+              towards your monthly total.
             </p>
           </Section>
 
-          <Section id="openapi" title="OpenAPI schema">
+          <Section id="help" title="Need help?">
             <p>
-              The API publishes a machine-readable schema you can feed into a
-              client generator or import into Postman or Insomnia.
+              This page is the full reference. There is one endpoint, and
+              everything it can return is listed above.
             </p>
-            <CodeBlock className="mt-5" code={`GET /openapi.json`} />
             <p className="mt-4">
-              Interactive docs are served at <Code>/docs</Code> and{" "}
-              <Code>/redoc</Code> on the API host.
+              If something does not work the way this page describes, email{" "}
+              <a
+                className="text-foreground underline underline-offset-4"
+                href="mailto:support@waverify.app"
+              >
+                support@waverify.app
+              </a>
+              . Please include the <Code>error.code</Code> you received and the
+              time of the request — that is enough for us to find it in our
+              logs.
             </p>
           </Section>
         </main>

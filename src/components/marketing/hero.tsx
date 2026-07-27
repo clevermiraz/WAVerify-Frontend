@@ -81,7 +81,7 @@ export function Hero() {
 
             <div className="space-y-4 overflow-x-auto p-5">
               <pre className="text-muted-foreground font-mono text-xs leading-relaxed">
-                <code>{`curl https://api.waverify.dev/v1/check \\
+                <code>{`curl https://api.waverify.app/api/v1/check \\
   -H "X-API-Key: wav_live_…" \\
   -d '{"phone":"+8801712345678"}'`}</code>
               </pre>

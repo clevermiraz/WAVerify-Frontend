@@ -10,10 +10,23 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js inlines NEXT_PUBLIC_* at build time, so the API URL must be known here.
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+# Next.js inlines NEXT_PUBLIC_* at build time, so these must be known here.
+# Deliberately no defaults: a missing value would otherwise be baked in and the
+# image would fail at runtime, in the browser, with nothing in the build log.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+# Not NEXT_PUBLIC_, but still needed here: canonical URLs, robots.txt and
+# sitemap.xml are generated during the build.
+ARG SITE_URL=https://waverify.app
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV SITE_URL=$SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN test -n "$NEXT_PUBLIC_API_URL" || { \
+      echo "ERROR: build-arg NEXT_PUBLIC_API_URL is required (e.g. https://api.waverify.app)"; \
+      exit 1; \
+    }
 
 RUN npm run build
 
