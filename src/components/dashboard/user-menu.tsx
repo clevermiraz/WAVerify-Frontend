@@ -34,9 +34,18 @@ export function UserMenu() {
           className="size-9 rounded-full p-0"
           aria-label="Account menu"
         >
-          <span className="bg-secondary flex size-8 items-center justify-center rounded-full border text-xs font-medium">
-            {initials(user.full_name, user.email)}
-          </span>
+          {user.profile_image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.profile_image_url}
+              alt={user.full_name ?? "Profile"}
+              className="size-8 rounded-full object-cover"
+            />
+          ) : (
+            <span className="bg-secondary flex size-8 items-center justify-center rounded-full border text-xs font-medium">
+              {initials(user.full_name, user.email)}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
 

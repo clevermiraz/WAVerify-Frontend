@@ -68,7 +68,7 @@ export const billingService = {
 };
 
 export const userService = {
-  update: (payload: { full_name?: string; company?: string }) =>
+  update: (payload: { full_name?: string; company?: string; profile_image_url?: string }) =>
     api.patch<User>("/users/me", payload),
   // `password` is omitted for Google-only accounts, which have none; the
   // access token is the only credential such a user can present.

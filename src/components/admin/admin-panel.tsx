@@ -1,7 +1,7 @@
 "use client";
 
 import { Activity, KeyRound, Users } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { AdminApiKeysTable } from "@/components/admin/api-keys-table";
 import { AdminPlansTable } from "@/components/admin/plans-table";
@@ -19,7 +19,6 @@ import { formatNumber } from "@/lib/utils";
 export function AdminPanel() {
   const { data: stats, isLoading } = useAdminStats();
 
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -33,7 +32,7 @@ export function AdminPanel() {
       params.set("tab", value);
     }
     const query = params.toString();
-    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
+    window.history.replaceState(null, "", `${pathname}${query ? `?${query}` : ""}`);
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

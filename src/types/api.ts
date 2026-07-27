@@ -18,6 +18,7 @@ export interface User {
   /** False for Google-only accounts, which have no password to change. */
   has_password: boolean;
   has_google: boolean;
+  profile_image_url: string | null;
 }
 
 export interface TokenPair {

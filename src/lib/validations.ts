@@ -49,6 +49,7 @@ export const changePasswordSchema = z
 export const profileSchema = z.object({
   full_name: z.string().max(150).optional(),
   company: z.string().max(150).optional(),
+  profile_image_url: z.string().url("Enter a valid URL.").optional().or(z.literal("")),
 });
 
 /**
