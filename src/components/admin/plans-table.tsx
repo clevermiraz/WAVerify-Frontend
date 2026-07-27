@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -142,8 +143,8 @@ export function AdminPlansTable() {
                   {plan.currency.toUpperCase()}
                 </TableCell>
                 <TableCell>
-                  {plan.monthly_request_quota
-                    ? plan.monthly_request_quota.toLocaleString()
+                  {plan.credits_awarded
+                    ? plan.credits_awarded.toLocaleString()
                     : "Unlimited"}
                 </TableCell>
                 <TableCell>
@@ -239,7 +240,7 @@ function PlanDialog({
     description: "",
     price_cents: 0,
     currency: "usd",
-    monthly_request_quota: 0 as number | null,
+    credits_awarded: 0 as number,
     rate_limit_per_minute: 60,
     features: "",
     is_contact_sales: false,
@@ -258,7 +259,7 @@ function PlanDialog({
         description: plan.description,
         price_cents: plan.price_cents,
         currency: plan.currency,
-        monthly_request_quota: plan.monthly_request_quota,
+        credits_awarded: plan.credits_awarded,
         rate_limit_per_minute: plan.rate_limit_per_minute,
         features: plan.features.join("\n"),
         is_contact_sales: plan.is_contact_sales,
@@ -274,7 +275,7 @@ function PlanDialog({
         description: "",
         price_cents: 0,
         currency: "usd",
-        monthly_request_quota: 1000,
+        credits_awarded: 1000,
         rate_limit_per_minute: 60,
         features: "",
         is_contact_sales: false,
@@ -344,15 +345,21 @@ function PlanDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">Slug (e.g., summer-promo)</Label>
-              <Input
+              <Label htmlFor="slug">Slug / Tier</Label>
+              <Select
                 id="slug"
                 value={formData.slug}
                 onChange={(e) =>
                   setFormData({ ...formData, slug: e.target.value })
                 }
                 required
-              />
+              >
+                <option value="" disabled>Select tier...</option>
+                <option value="free">free</option>
+                <option value="starter">starter</option>
+                <option value="growth">growth</option>
+                <option value="pro">pro</option>
+              </Select>
             </div>
           </div>
           <div className="space-y-2">
@@ -396,22 +403,18 @@ function PlanDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="monthly_request_quota">
-                Monthly Quota (0 for unlimited)
+              <Label htmlFor="credits_awarded">
+                Credits Awarded (0 for unlimited)
               </Label>
               <Input
-                id="monthly_request_quota"
+                id="credits_awarded"
                 type="number"
-                value={
-                  formData.monthly_request_quota === null
-                    ? 0
-                    : formData.monthly_request_quota
-                }
+                value={formData.credits_awarded}
                 onChange={(e) => {
                   const val = parseInt(e.target.value);
                   setFormData({
                     ...formData,
-                    monthly_request_quota: val === 0 ? null : val,
+                    credits_awarded: val || 0,
                   });
                 }}
                 required

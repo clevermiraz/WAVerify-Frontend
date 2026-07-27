@@ -59,13 +59,9 @@ export function UsageView() {
               icon={CalendarDays}
             />
             <StatCard
-              label="This period"
+              label="This month"
               value={formatNumber(summary.month_requests)}
-              hint={
-                summary.quota === null
-                  ? "Unlimited plan"
-                  : `of ${formatNumber(summary.quota)}`
-              }
+              hint="Total requests"
               icon={Activity}
             />
             <StatCard
@@ -75,7 +71,7 @@ export function UsageView() {
                   ? "Unlimited"
                   : formatNumber(summary.remaining_credits)
               }
-              hint={`Resets ${formatDate(summary.period_end)}`}
+              hint="Never expire"
               icon={Gauge}
             />
             <StatCard
@@ -88,36 +84,6 @@ export function UsageView() {
         )}
       </div>
 
-      {summary && summary.quota !== null && (
-        <Card className="mt-6">
-          <CardContent className="p-6">
-            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-              <span className="text-sm font-medium">
-                Quota used this period
-              </span>
-              <span className="text-muted-foreground text-sm tabular-nums">
-                {formatNumber(summary.month_requests)} /{" "}
-                {formatNumber(summary.quota)}
-              </span>
-            </div>
-            <Progress
-              value={summary.month_requests}
-              max={summary.quota}
-              label="Quota used this billing period"
-            />
-            <p className="text-muted-foreground mt-3 text-xs">
-              Billing period {formatDate(summary.period_start)} –{" "}
-              {formatDate(summary.period_end)}.{" "}
-              <Link
-                href="/dashboard/billing"
-                className="text-foreground underline underline-offset-4"
-              >
-                Change plan
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="mt-6">
         <CardHeader>

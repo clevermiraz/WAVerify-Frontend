@@ -100,44 +100,30 @@ export function DashboardOverview() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Monthly usage</CardTitle>
+            <CardTitle>Credit Balance</CardTitle>
             <CardDescription>
-              {stats
-                ? `You're on the ${stats.plan_name} plan.`
-                : "Loading your plan…"}
+              Your credits never expire.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {stats ? (
               <>
-                <div className="mb-2 flex items-baseline justify-between gap-2">
-                  <span className="text-2xl font-semibold tabular-nums">
-                    {formatNumber(stats.month_requests)}
+                <div className="mb-2 flex items-baseline gap-3">
+                  <span className="text-4xl font-bold tabular-nums">
+                    {formatNumber(stats.remaining_credits ?? 0)}
                   </span>
-                  <span className="text-muted-foreground text-sm">
-                    {stats.quota === null
-                      ? "of unlimited"
-                      : `of ${formatNumber(stats.quota)} requests`}
+                  <span className="text-muted-foreground font-medium">
+                    credits remaining
                   </span>
                 </div>
 
-                {stats.quota !== null && (
-                  <Progress
-                    value={stats.month_requests}
-                    max={stats.quota}
-                    label="Monthly request usage"
-                  />
-                )}
-
                 <p className="text-muted-foreground mt-3 text-sm">
-                  {stats.remaining_credits === null
-                    ? "No monthly limit on your plan."
-                    : `${formatNumber(stats.remaining_credits)} requests remaining this period.`}
+                  You have used {formatNumber(stats.month_requests)} credits this month.
                 </p>
 
                 <Button asChild variant="outline" size="sm" className="mt-5">
                   <Link href="/dashboard/billing">
-                    Manage plan
+                    Top-up credits
                     <ArrowRight />
                   </Link>
                 </Button>

@@ -26,8 +26,8 @@ export const queryKeys = {
   admin: {
     stats: ["admin", "stats"] as const,
     users: (params: object) => ["admin", "users", params] as const,
-    subscriptions: (params: object) =>
-      ["admin", "subscriptions", params] as const,
+    wallets: (params: object) =>
+      ["admin", "wallets", params] as const,
     apiKeys: (params: object) => ["admin", "api-keys", params] as const,
     searchLogs: (params: object) => ["admin", "search-logs", params] as const,
     settings: ["admin", "settings"] as const,
@@ -133,13 +133,13 @@ export function useAdminUsers(params: {
   });
 }
 
-export function useAdminSubscriptions(params: {
+export function useAdminWallets(params: {
   page: number;
   page_size: number;
 }) {
   return useQuery({
-    queryKey: queryKeys.admin.subscriptions(params),
-    queryFn: () => adminService.subscriptions(params),
+    queryKey: queryKeys.admin.wallets(params),
+    queryFn: () => adminService.wallets(params),
     placeholderData: (previous) => previous,
   });
 }

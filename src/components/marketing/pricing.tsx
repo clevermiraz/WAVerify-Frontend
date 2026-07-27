@@ -82,9 +82,9 @@ export function Pricing() {
                     </div>
 
                     <p className="text-muted-foreground mt-2 text-sm">
-                      {plan.monthly_request_quota === null
-                        ? "Unlimited requests"
-                        : `${formatNumber(plan.monthly_request_quota)} requests / month`}
+                      {plan.credits_awarded === null
+                        ? "Unlimited credits"
+                        : `Adds ${formatNumber(plan.credits_awarded)} credits`}
                     </p>
 
                     <Button

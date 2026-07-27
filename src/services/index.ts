@@ -10,7 +10,7 @@ import type {
   AdminApiKey,
   AdminSearchLog,
   AdminStats,
-  AdminSubscription,
+  AdminWallet,
   AdminUser,
   ApiKey,
   BillingOverview,
@@ -22,7 +22,7 @@ import type {
   Page,
   Plan,
   SearchLog,
-  Subscription,
+  Wallet,
   SystemSettings,
   UpdatePlanRequest,
   UsageOverview,
@@ -63,9 +63,8 @@ export const usageService = {
 export const billingService = {
   plans: () => api.get<Plan[]>("/plans", { anonymous: true }),
   overview: () => api.get<BillingOverview>("/billing"),
-  changePlan: (plan_slug: string) =>
-    api.post<Subscription>("/billing/plan", { plan_slug }),
-  cancel: () => api.post<Subscription>("/billing/cancel"),
+  topup: (plan_slug: string) =>
+    api.post<Wallet>("/billing/topup", { plan_slug }),
 };
 
 export const userService = {
@@ -83,9 +82,9 @@ export const adminService = {
     api.get<Page<AdminUser>>(`/admin/users${buildQuery(params)}`),
   updateUser: (id: string, payload: { is_active?: boolean; role?: string }) =>
     api.patch<AdminUser>(`/admin/users/${id}`, payload),
-  subscriptions: (params: { page?: number; page_size?: number }) =>
-    api.get<Page<AdminSubscription>>(
-      `/admin/subscriptions${buildQuery(params)}`
+  wallets: (params: { page?: number; page_size?: number }) =>
+    api.get<Page<AdminWallet>>(
+      `/admin/wallets${buildQuery(params)}`
     ),
   apiKeys: (params: { page?: number; page_size?: number }) =>
     api.get<Page<AdminApiKey>>(`/admin/api-keys${buildQuery(params)}`),

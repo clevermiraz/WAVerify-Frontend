@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AdminApiKeysTable } from "@/components/admin/api-keys-table";
 import { AdminPlansTable } from "@/components/admin/plans-table";
 import { AdminSearchLogsTable } from "@/components/admin/search-logs-table";
-import { AdminSubscriptionsTable } from "@/components/admin/subscriptions-table";
+import { AdminWalletsTable } from "@/components/admin/wallets-table";
 import { AdminSystemSettings } from "@/components/admin/system-settings";
 import { AdminUsersTable } from "@/components/admin/users-table";
 import { AdminWhatsAppAccounts } from "@/components/admin/whatsapp-accounts-table";
@@ -62,7 +62,7 @@ export function AdminPanel() {
     <>
       <PageHeader
         title="Admin"
-        description="Users, subscriptions, keys and system configuration."
+        description="Users, wallets, keys and system configuration."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -97,7 +97,7 @@ export function AdminPanel() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-8">
         <TabsList className="max-w-full overflow-x-auto">
           <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+          <TabsTrigger value="wallets">Wallets</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="logs">Search Logs</TabsTrigger>
           <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
@@ -108,8 +108,8 @@ export function AdminPanel() {
         <TabsContent value="users" className="mt-4">
           <AdminUsersTable />
         </TabsContent>
-        <TabsContent value="subscriptions" className="mt-4">
-          <AdminSubscriptionsTable />
+        <TabsContent value="wallets" className="mt-4">
+          <AdminWalletsTable />
         </TabsContent>
         <TabsContent value="api-keys" className="mt-4">
           <AdminApiKeysTable />

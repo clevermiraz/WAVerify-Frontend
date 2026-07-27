@@ -1,8 +1,7 @@
 /** Mirrors the Pydantic schemas served by the FastAPI backend. */
 
 export type UserRole = "user" | "admin";
-export type PlanTier = string;
-export type SubscriptionStatus = "active" | "canceled" | "past_due";
+export type PlanTier = "free" | "starter" | "growth" | "pro";
 export type LookupStatus = "exists" | "not_found" | "failed";
 export type LookupSource = "dashboard" | "api";
 
@@ -104,7 +103,7 @@ export interface Plan {
   description: string;
   price_cents: number;
   currency: string;
-  monthly_request_quota: number | null;
+  credits_awarded: number;
   rate_limit_per_minute: number;
   features: string[];
   is_contact_sales: boolean;
@@ -120,7 +119,7 @@ export interface CreatePlanRequest {
   description: string;
   price_cents: number;
   currency?: string;
-  monthly_request_quota: number | null;
+  credits_awarded: number;
   rate_limit_per_minute: number;
   features: string[];
   is_contact_sales: boolean;
@@ -132,20 +131,13 @@ export interface CreatePlanRequest {
 
 export type UpdatePlanRequest = Partial<CreatePlanRequest>;
 
-export interface Subscription {
+export interface Wallet {
   id: string;
-  status: SubscriptionStatus;
-  current_period_start: string;
-  current_period_end: string;
-  canceled_at: string | null;
-  plan: Plan;
+  credits_balance: number;
 }
 
 export interface BillingOverview {
-  subscription: Subscription;
-  requests_used: number;
-  requests_remaining: number | null;
-  quota: number | null;
+  wallet: Wallet;
 }
 
 export interface UsagePoint {
@@ -158,12 +150,9 @@ export interface UsagePoint {
 export interface UsageSummary {
   today_requests: number;
   month_requests: number;
-  quota: number | null;
   remaining_credits: number | null;
   success_rate: number;
   average_response_time_ms: number;
-  period_start: string;
-  period_end: string;
 }
 
 export interface UsageOverview {
@@ -178,10 +167,8 @@ export interface DashboardStats {
   success_rate: number;
   average_response_time_ms: number;
   month_requests: number;
-  quota: number | null;
   remaining_credits: number | null;
   active_api_keys: number;
-  plan_name: string;
 }
 
 export interface AdminStats {
@@ -241,13 +228,11 @@ export interface AdminApiKey {
   last_used_at: string | null;
 }
 
-export interface AdminSubscription {
+export interface AdminWallet {
   id: string;
   user_id: string;
   user_email: string;
-  plan_name: string;
-  status: string;
-  current_period_end: string;
+  credits_balance: number;
 }
 
 export interface AdminSearchLog {
