@@ -14,15 +14,17 @@ import type {
   AdminUser,
   ApiKey,
   BillingOverview,
+  CheckoutResponse,
   CheckResult,
   CreatedApiKey,
+  InvoiceResponse,
   CreatePlanRequest,
   DashboardStats,
   LookupStatus,
   Page,
+  Payment,
   Plan,
   SearchLog,
-  Wallet,
   SystemSettings,
   UpdatePlanRequest,
   UsageOverview,
@@ -63,8 +65,16 @@ export const usageService = {
 export const billingService = {
   plans: () => api.get<Plan[]>("/plans", { anonymous: true }),
   overview: () => api.get<BillingOverview>("/billing"),
-  topup: (plan_slug: string) =>
-    api.post<Wallet>("/billing/topup", { plan_slug }),
+  payments: () => api.get<Payment[]>("/billing/payments"),
+  // Polar builds invoice PDFs on demand, so the first call usually answers
+  // `generating` and the caller polls.
+  invoice: (paymentId: string) =>
+    api.get<InvoiceResponse>(`/billing/payments/${paymentId}/invoice`),
+  // Returns a hosted Polar URL to navigate to. Credits are granted by Polar's
+  // webhook after payment, never by this call, so the balance will not have
+  // changed by the time the buyer comes back.
+  checkout: (plan_slug: string) =>
+    api.post<CheckoutResponse>("/billing/checkout", { plan_slug }),
 };
 
 export const userService = {

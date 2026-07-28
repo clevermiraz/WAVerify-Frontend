@@ -34,6 +34,11 @@ const FAQS = [
       "Yes — your own search history is kept so you can review it in the dashboard, and it is only ever visible to your account. Deleting your account removes it along with everything else.",
   },
   {
+    question: "What if I buy credits and the service isn't for me?",
+    answer:
+      "Email support@waverify.app within 30 days and we refund 100% of what you paid — no questions asked. Credits you have already used do not reduce the refund: run a thousand lookups, decide it is not for you, and you still get the full amount back. The remaining credits are removed from your wallet when the refund is issued.",
+  },
+  {
     question: "Is this an official WhatsApp product?",
     answer:
       "No. WAVerify is an independent service and is not affiliated with, endorsed by, or connected to WhatsApp or Meta Platforms, Inc.",

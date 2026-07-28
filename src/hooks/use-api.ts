@@ -22,6 +22,7 @@ export const queryKeys = {
   apiKeys: ["api-keys"] as const,
   plans: ["plans"] as const,
   billing: ["billing"] as const,
+  payments: ["payments"] as const,
   history: (params: object) => ["history", params] as const,
   admin: {
     stats: ["admin", "stats"] as const,
@@ -75,6 +76,13 @@ export function useBilling() {
   return useQuery({
     queryKey: queryKeys.billing,
     queryFn: billingService.overview,
+  });
+}
+
+export function usePayments() {
+  return useQuery({
+    queryKey: queryKeys.payments,
+    queryFn: billingService.payments,
   });
 }
 

@@ -141,6 +141,31 @@ export interface BillingOverview {
   wallet: Wallet;
 }
 
+export interface CheckoutResponse {
+  /** Hosted Polar checkout page — navigate the browser to it. */
+  checkout_url: string;
+}
+
+/** `unmapped` means the payment succeeded but could not be matched to a plan
+ *  automatically, so support has to finish it by hand. */
+export type PaymentStatus = "paid" | "refunded" | "unmapped";
+
+/** `url` is null while Polar is still building the PDF. */
+export interface InvoiceResponse {
+  status: "ready" | "generating";
+  url: string | null;
+}
+
+export interface Payment {
+  id: string;
+  status: PaymentStatus;
+  amount_cents: number;
+  currency: string;
+  credits_granted: number;
+  created_at: string;
+  plan: Plan | null;
+}
+
 export interface UsagePoint {
   date: string;
   total: number;

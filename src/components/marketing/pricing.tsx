@@ -125,10 +125,23 @@ export function Pricing() {
               })}
         </div>
 
-        <p className="text-muted-foreground mt-10 text-center text-xs">
-          Plans are billed monthly. Payment processing is not enabled in this
-          release — plan changes apply immediately at no charge.
-        </p>
+        <div className="mt-10 text-center">
+          <p className="text-sm font-medium">
+            30-day money-back guarantee — no questions asked.
+          </p>
+          <p className="text-muted-foreground mx-auto mt-2 max-w-md text-xs leading-relaxed">
+            Every pack is a one-time purchase and your credits never expire. If
+            it isn&apos;t right for you, we refund 100% of what you paid within
+            30 days, even if you&apos;ve already used credits.{" "}
+            <Link
+              href="/refund-policy"
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              Read the policy
+            </Link>
+            .
+          </p>
+        </div>
       </div>
     </section>
   );

@@ -1,12 +1,14 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Info } from "lucide-react";
+import { Check, Download } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/dashboard/page-header";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,44 +30,107 @@ import {
   queryKeys,
   toastApiError,
   useBilling,
+  usePayments,
   usePlans,
 } from "@/hooks/use-api";
-import { ApiError } from "@/lib/api-client";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { billingService } from "@/services";
 import type { Plan } from "@/types/api";
 
+/** Polar's webhook usually lands within a second or two of the buyer being
+ *  redirected back, but it is a separate network path and can lag. Re-check
+ *  the balance on this schedule before giving up and telling them to reload. */
+const SETTLEMENT_POLL_MS = [1_000, 2_000, 4_000, 8_000];
+
+/** Polar builds invoice PDFs on demand; observed latency is 4–6s. */
+const INVOICE_POLL_MS = 1_500;
+const INVOICE_POLL_ATTEMPTS = 10;
+
 export function BillingView() {
   const { data: billing, isLoading: billingLoading } = useBilling();
   const { data: plans, isLoading: plansLoading } = usePlans();
+  const { data: payments } = usePayments();
   const [pendingPlan, setPendingPlan] = React.useState<Plan | null>(null);
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const topup = useMutation({
-    mutationFn: (slug: string) => billingService.topup(slug),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.billing });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboardStats,
-      });
-      void queryClient.invalidateQueries({ queryKey: ["usage"] });
-      toast.success(`Credits successfully added to your wallet.`);
-      setPendingPlan(null);
+  // Captured once, on mount. The effect below strips `checkout_id` from the
+  // URL, and reading the live value here would re-run that effect and cancel
+  // the settlement timers the moment they were scheduled.
+  const [arrivedFromCheckout] = React.useState(
+    () => searchParams.get("checkout_id") !== null
+  );
+  const [awaitingCredits, setAwaitingCredits] =
+    React.useState(arrivedFromCheckout);
+
+  const checkout = useMutation({
+    mutationFn: (slug: string) => billingService.checkout(slug),
+    onSuccess: (response) => {
+      // Leaves the SPA entirely — Polar hosts the payment page. Deliberately
+      // not `router.push`, which would try to route this internally.
+      window.location.href = response.checkout_url;
     },
     onError: (error) => {
-      if (
-        error instanceof ApiError &&
-        error.code === "free_trial_already_claimed"
-      ) {
-        toast.info(
-          "You already received your free credits when you signed up."
-        );
-      } else {
-        toastApiError(error);
-      }
+      toastApiError(error);
       setPendingPlan(null);
     },
   });
+
+  const [invoiceBusy, setInvoiceBusy] = React.useState<string | null>(null);
+
+  const downloadInvoice = React.useCallback(async (paymentId: string) => {
+    setInvoiceBusy(paymentId);
+    try {
+      // The first request only schedules the PDF, so poll until it exists.
+      for (let attempt = 0; attempt < INVOICE_POLL_ATTEMPTS; attempt++) {
+        const invoice = await billingService.invoice(paymentId);
+        if (invoice.status === "ready" && invoice.url) {
+          // Served as `Content-Disposition: attachment`, so this downloads
+          // in place rather than navigating away, and no popup is opened.
+          window.location.href = invoice.url;
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, INVOICE_POLL_MS));
+      }
+      toast.error(
+        "The invoice is still being prepared. Please try again shortly."
+      );
+    } catch (error) {
+      toastApiError(error);
+    } finally {
+      setInvoiceBusy(null);
+    }
+  }, []);
+
+  // Returning from a completed checkout. The credits are granted by Polar's
+  // webhook, not by this page, so the balance may still be stale for a moment.
+  React.useEffect(() => {
+    if (!arrivedFromCheckout) return;
+
+    toast.success("Payment received — adding your credits.");
+    // Drop the query param so a refresh does not replay this.
+    router.replace("/dashboard/billing");
+
+    const timers = SETTLEMENT_POLL_MS.map((delay) =>
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.billing });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.payments });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboardStats,
+        });
+      }, delay)
+    );
+    const done = setTimeout(
+      () => setAwaitingCredits(false),
+      SETTLEMENT_POLL_MS[SETTLEMENT_POLL_MS.length - 1] + 1_000
+    );
+
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(done);
+    };
+  }, [arrivedFromCheckout, queryClient, router]);
 
   return (
     <>
@@ -73,14 +138,6 @@ export function BillingView() {
         title="Wallet & Top-up"
         description="Manage your credit balance and top up when needed."
       />
-
-      <Alert className="mb-6">
-        <Info />
-        <AlertDescription>
-          Payment processing isn&apos;t enabled in this release. Plan changes
-          apply immediately and nothing is charged.
-        </AlertDescription>
-      </Alert>
 
       <Card className="mb-8">
         <CardHeader>
@@ -96,16 +153,19 @@ export function BillingView() {
               <Skeleton className="h-4 w-52" />
             </div>
           ) : (
-            <>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-4xl font-bold tracking-tight tabular-nums">
-                  {formatNumber(billing.wallet.credits_balance)}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-4xl font-bold tracking-tight tabular-nums">
+                {formatNumber(billing.wallet.credits_balance)}
+              </span>
+              <span className="text-muted-foreground font-medium">
+                credits remaining
+              </span>
+              {awaitingCredits && (
+                <span className="text-muted-foreground text-sm">
+                  Confirming your payment…
                 </span>
-                <span className="text-muted-foreground font-medium">
-                  credits remaining
-                </span>
-              </div>
-            </>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -179,12 +239,58 @@ export function BillingView() {
                     className="mt-5 w-full"
                     onClick={() => setPendingPlan(plan)}
                   >
-                    Top-up {plan.name}
+                    Buy {plan.name}
                   </Button>
                 )}
               </Card>
             ))}
       </div>
+
+      {payments && payments.length > 0 && (
+        <>
+          <h2 className="mt-10 mb-4 text-lg font-semibold tracking-tight">
+            Purchase history
+          </h2>
+          <Card>
+            <CardContent className="divide-border divide-y p-0">
+              {payments.map((payment) => (
+                <div
+                  key={payment.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {payment.plan?.name ?? "Unrecognised purchase"}
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                      {new Date(payment.created_at).toLocaleDateString()} ·{" "}
+                      {formatNumber(payment.credits_granted)} credits
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {payment.status !== "paid" && (
+                      <Badge variant="outline">{payment.status}</Badge>
+                    )}
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(payment.amount_cents, payment.currency)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      loading={invoiceBusy === payment.id}
+                      disabled={invoiceBusy !== null}
+                      onClick={() => void downloadInvoice(payment.id)}
+                    >
+                      <Download aria-hidden />
+                      Invoice
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <Dialog
         open={pendingPlan !== null}
@@ -194,20 +300,32 @@ export function BillingView() {
           <DialogHeader>
             <DialogTitle>Buy {pendingPlan?.name}?</DialogTitle>
             <DialogDescription>
-              Your credits will be added immediately. Nothing is actually
-              charged in this demo.
+              You will be taken to our payment provider to complete the
+              purchase. Your credits are added as soon as the payment clears.
             </DialogDescription>
           </DialogHeader>
+
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Covered by our 30-day money-back guarantee — we refund 100% of what
+            you paid, no questions asked, even if you&apos;ve used credits.{" "}
+            <Link
+              href="/refund-policy"
+              className="hover:text-foreground underline underline-offset-4"
+            >
+              Read the policy
+            </Link>
+            .
+          </p>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setPendingPlan(null)}>
               Cancel
             </Button>
             <Button
-              loading={topup.isPending}
-              onClick={() => pendingPlan && topup.mutate(pendingPlan.slug)}
+              loading={checkout.isPending}
+              onClick={() => pendingPlan && checkout.mutate(pendingPlan.slug)}
             >
-              Confirm top-up
+              Continue to payment
             </Button>
           </DialogFooter>
         </DialogContent>

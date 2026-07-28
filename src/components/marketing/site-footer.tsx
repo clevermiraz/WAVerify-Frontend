@@ -8,6 +8,7 @@ const SECTIONS = [
     links: [
       { href: "/#features", label: "Features" },
       { href: "/#pricing", label: "Pricing" },
+      { href: "/refund-policy", label: "Refund policy" },
       { href: "/docs", label: "API Docs" },
       { href: "/#faq", label: "FAQ" },
     ],
