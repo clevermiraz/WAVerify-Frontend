@@ -21,7 +21,8 @@ export function Pricing() {
             Simple, predictable pricing
           </h2>
           <p className="text-muted-foreground mt-4 text-lg leading-relaxed">
-            Start free. Upgrade when you outgrow it. No per-seat charges.
+            Start free. Top up when you need more. No subscription, no per-seat
+            charges — your credits never expire.
           </p>
         </div>
 
@@ -75,7 +76,7 @@ export function Pricing() {
                             {formatCurrency(plan.price_cents, plan.currency)}
                           </span>
                           <span className="text-muted-foreground text-sm">
-                            /month
+                            one-time
                           </span>
                         </>
                       )}
@@ -103,7 +104,7 @@ export function Pricing() {
                           ? "Contact Sales"
                           : plan.price_cents === 0
                             ? "Start Free"
-                            : `Choose ${plan.name}`}
+                            : `Get ${plan.name}`}
                       </Link>
                     </Button>
 

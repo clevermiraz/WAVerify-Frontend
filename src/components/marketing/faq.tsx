@@ -24,9 +24,9 @@ const FAQS = [
       "Typical lookups complete in a few hundred milliseconds. Repeat checks of the same number within the cache window return in single-digit milliseconds and are marked with a cached flag.",
   },
   {
-    question: "What happens when I hit my monthly quota?",
+    question: "What happens when I run out of credits?",
     answer:
-      "The API returns HTTP 402 with a quota_exceeded error code, and the dashboard shows how much of the allowance is left. Upgrading a plan restores service immediately.",
+      "The API returns HTTP 402 with a quota_exceeded error code, and the dashboard shows your credit balance. Buying any top-up pack restores service immediately. Credits never expire, so anything left over stays in your wallet.",
   },
   {
     question: "Do you store the numbers I look up?",
