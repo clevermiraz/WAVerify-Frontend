@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Refund Policy",
   description:
-    "WAVerify's 30-day money-back guarantee. Email us within 30 days for a full refund — no questions asked, and credits you've already used don't reduce what you get back.",
+    "WAVerify's 30-day refund policy. Haven't used your credits? Get every penny back. Used some? We refund the value of what's left.",
 };
 
 const SUPPORT_EMAIL = "support@waverify.app";
@@ -20,50 +20,74 @@ export default function RefundPolicyPage() {
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          30-day money-back guarantee
+          30-day refund policy
         </h1>
 
         <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
-          If WAVerify isn&apos;t right for you, email us within 30 days of your
-          purchase and we&apos;ll refund it in full. No questions, no forms, no
-          back-and-forth.
+          Credit packs are refundable for 30 days. If you haven&apos;t used
+          them, you get every penny back. If you&apos;ve used some, we refund
+          what&apos;s left.
         </p>
 
-        <div className="bg-muted/40 mt-8 rounded-lg border p-6">
-          <h2 className="font-semibold tracking-tight">
-            Already used some credits? You still get everything back.
-          </h2>
-          <p className="text-muted-foreground mt-3 leading-relaxed">
-            Run 1,000 lookups, or 50,000, and then decide it isn&apos;t for you
-            — we still refund <strong className="text-foreground">100% of
-            what you paid</strong>. We don&apos;t subtract the value of the
-            credits you&apos;ve already spent, and we don&apos;t prorate. You
-            keep the results you got; you get all of your money back.
-          </p>
-        </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="bg-muted/40 rounded-lg border p-5">
+            <h2 className="font-semibold tracking-tight">
+              Nothing used? Full refund.
+            </h2>
+            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+              Bought a pack and haven&apos;t spent a single credit? Email us
+              within 30 days and we return 100% of what you paid. No questions,
+              no forms.
+            </p>
+          </div>
 
-        <div className="mt-6 rounded-lg border p-5">
-          <p className="text-sm leading-relaxed">
-            To claim it, email{" "}
-            <a
-              href={`mailto:${SUPPORT_EMAIL}?subject=Refund%20request`}
-              className="font-medium underline underline-offset-4"
-            >
-              {SUPPORT_EMAIL}
-            </a>{" "}
-            from the address on your account and tell us which purchase to
-            refund. That&apos;s the whole process — we won&apos;t ask you why.
-          </p>
+          <div className="bg-muted/40 rounded-lg border p-5">
+            <h2 className="font-semibold tracking-tight">
+              Used some? We refund the rest.
+            </h2>
+            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+              We deduct only the credits you actually spent and refund the
+              value of the ones you didn&apos;t, at the rate you paid for them.
+            </p>
+          </div>
         </div>
 
         <section className="mt-12 space-y-8">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">
-              What you get back
+              How the amount is worked out
             </h2>
             <p className="text-muted-foreground mt-3 leading-relaxed">
-              The full amount you paid for that credit pack, returned to the
-              original payment method. No fees deducted, no usage subtracted.
+              Every pack has a simple per-credit rate: the price divided by the
+              credits it contains. Your refund is that rate multiplied by the
+              credits you have left.
+            </p>
+            <div className="bg-muted/40 mt-4 rounded-lg border p-5">
+              <p className="text-sm font-medium">Example</p>
+              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                Starter is <strong className="text-foreground">$9 for 7,500
+                credits</strong>, so each credit is worth $0.0012. If you use
+                1,500 credits and then ask for a refund, 6,000 credits remain
+                and you get back{" "}
+                <strong className="text-foreground">$7.20</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">
+              How to ask
+            </h2>
+            <p className="text-muted-foreground mt-3 leading-relaxed">
+              Email{" "}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}?subject=Refund%20request`}
+                className="text-foreground font-medium underline underline-offset-4"
+              >
+                {SUPPORT_EMAIL}
+              </a>{" "}
+              from the address on your account and tell us which purchase to
+              refund. We won&apos;t ask you to justify it.
             </p>
           </div>
 
@@ -83,10 +107,10 @@ export default function RefundPolicyPage() {
               What happens to your credits
             </h2>
             <p className="text-muted-foreground mt-3 leading-relaxed">
-              The credits from a refunded purchase are removed from your wallet
-              when the refund is issued. If you&apos;ve already spent some of
-              them, your balance simply drops to zero rather than going
-              negative, and your account stays open on the free plan.
+              The credits remaining from a refunded purchase are removed from
+              your wallet when the refund is issued — you&apos;ve been paid for
+              them, so they don&apos;t stay in your balance. Your account stays
+              open on the free plan.
             </p>
           </div>
 

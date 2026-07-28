@@ -24,6 +24,7 @@ import type {
   Page,
   Payment,
   Plan,
+  PortalResponse,
   SearchLog,
   SystemSettings,
   UpdatePlanRequest,
@@ -70,6 +71,9 @@ export const billingService = {
   // `generating` and the caller polls.
   invoice: (paymentId: string) =>
     api.get<InvoiceResponse>(`/billing/payments/${paymentId}/invoice`),
+  // Polar's customer portal: invoices, receipts, and editing billing details
+  // such as company name or VAT number. 404s until the user has purchased.
+  portal: () => api.post<PortalResponse>("/billing/portal", {}),
   // Returns a hosted Polar URL to navigate to. Credits are granted by Polar's
   // webhook after payment, never by this call, so the balance will not have
   // changed by the time the buyer comes back.

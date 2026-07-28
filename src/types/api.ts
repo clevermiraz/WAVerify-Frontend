@@ -150,6 +150,11 @@ export interface CheckoutResponse {
  *  automatically, so support has to finish it by hand. */
 export type PaymentStatus = "paid" | "refunded" | "unmapped";
 
+export interface PortalResponse {
+  /** Signed, short-lived link into Polar's customer portal. */
+  portal_url: string;
+}
+
 /** `url` is null while Polar is still building the PDF. */
 export interface InvoiceResponse {
   status: "ready" | "generating";

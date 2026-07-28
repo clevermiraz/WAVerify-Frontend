@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Download } from "lucide-react";
+import { Check, Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -75,6 +75,15 @@ export function BillingView() {
       toastApiError(error);
       setPendingPlan(null);
     },
+  });
+
+  const portal = useMutation({
+    mutationFn: () => billingService.portal(),
+    onSuccess: (response) => {
+      // Polar-hosted, so a full navigation rather than a client-side route.
+      window.location.href = response.portal_url;
+    },
+    onError: (error) => toastApiError(error),
   });
 
   const [invoiceBusy, setInvoiceBusy] = React.useState<string | null>(null);
@@ -248,9 +257,20 @@ export function BillingView() {
 
       {payments && payments.length > 0 && (
         <>
-          <h2 className="mt-10 mb-4 text-lg font-semibold tracking-tight">
-            Purchase history
-          </h2>
+          <div className="mt-10 mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Purchase history
+            </h2>
+            <Button
+              variant="outline"
+              size="sm"
+              loading={portal.isPending}
+              onClick={() => portal.mutate()}
+            >
+              <ExternalLink aria-hidden />
+              Manage billing
+            </Button>
+          </div>
           <Card>
             <CardContent className="divide-border divide-y p-0">
               {payments.map((payment) => (
@@ -306,8 +326,8 @@ export function BillingView() {
           </DialogHeader>
 
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Covered by our 30-day money-back guarantee — we refund 100% of what
-            you paid, no questions asked, even if you&apos;ve used credits.{" "}
+            Covered by our 30-day refund policy — unused credits come back in
+            full, no questions asked.{" "}
             <Link
               href="/refund-policy"
               className="hover:text-foreground underline underline-offset-4"

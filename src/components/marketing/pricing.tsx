@@ -127,12 +127,12 @@ export function Pricing() {
 
         <div className="mt-10 text-center">
           <p className="text-sm font-medium">
-            30-day money-back guarantee — no questions asked.
+            30-day refund policy — no questions asked.
           </p>
           <p className="text-muted-foreground mx-auto mt-2 max-w-md text-xs leading-relaxed">
-            Every pack is a one-time purchase and your credits never expire. If
-            it isn&apos;t right for you, we refund 100% of what you paid within
-            30 days, even if you&apos;ve already used credits.{" "}
+            Every pack is a one-time purchase and your credits never expire.
+            Haven&apos;t used them? Get every penny back within 30 days. Used
+            some? We refund the value of what&apos;s left.{" "}
             <Link
               href="/refund-policy"
               className="underline underline-offset-4 hover:text-foreground"

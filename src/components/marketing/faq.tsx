@@ -36,7 +36,7 @@ const FAQS = [
   {
     question: "What if I buy credits and the service isn't for me?",
     answer:
-      "Email support@waverify.app within 30 days and we refund 100% of what you paid — no questions asked. Credits you have already used do not reduce the refund: run a thousand lookups, decide it is not for you, and you still get the full amount back. The remaining credits are removed from your wallet when the refund is issued.",
+      "Email support@waverify.app within 30 days and we will refund it — no questions asked. If you have not spent any credits you get 100% of what you paid. If you have spent some, we deduct only those and refund the value of the credits you have left, at the rate you paid for them: use 1,500 of a 7,500-credit Starter pack and the remaining 6,000 come back as $7.20. Whatever is left is removed from your wallet when the refund is issued.",
   },
   {
     question: "Is this an official WhatsApp product?",
