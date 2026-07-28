@@ -8,33 +8,40 @@ interface LogoProps {
   showWordmark?: boolean;
 }
 
-/** The mark: a checkmark inside a rounded speech bubble. */
+/**
+ * The mark: two ticks — delivered, then confirmed.
+ *
+ * The rear tick stops short of the front tick's descent so the pair never
+ * crosses and tangles; both long arms share the same slope. The rear tick takes
+ * `currentColor` so it flips with the theme, and the front tick uses the same
+ * `--success` token the UI already reserves for a positive verification.
+ *
+ * Wide rather than square by design — for tabs and avatars use `app/icon.svg`,
+ * which sets the same mark inside a tile.
+ */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        "bg-primary text-primary-foreground inline-flex size-7 items-center justify-center rounded-lg",
-        className
-      )}
+    <svg
+      viewBox="0 5 32 22"
+      fill="none"
+      className={cn("h-[1.15rem] w-auto", className)}
       aria-hidden
     >
-      <svg viewBox="0 0 24 24" fill="none" className="size-4">
-        <path
-          d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="m8.8 11.8 2.1 2.1 4.3-4.3"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
+      <path
+        d="M2.8 18.2 7.9 23.3 11.2 19"
+        stroke="currentColor"
+        strokeWidth="3.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12.4 18.2 17.5 23.3 29 8.4"
+        stroke="var(--success)"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -46,11 +53,16 @@ export function Logo({
   return (
     <Link
       href={href}
-      className={cn("inline-flex items-center gap-2 font-semibold", className)}
+      className={cn("inline-flex items-center gap-2", className)}
     >
       <LogoMark />
       {showWordmark && (
-        <span className="text-[0.95rem] tracking-tight">WAVerify</span>
+        // Geist is loaded as a variable font, so the 620/450 pairing is real
+        // rather than a snapped fallback. The weight shift explains the name.
+        <span className="text-[0.95rem] leading-none tracking-[-0.03em]">
+          <span className="font-[620]">WA</span>
+          <span className="font-[450]">Verify</span>
+        </span>
       )}
       <span className="sr-only">WAVerify home</span>
     </Link>
