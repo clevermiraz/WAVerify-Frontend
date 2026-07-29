@@ -113,6 +113,7 @@ export const SUCCESS_RESPONSE = `{
     "international_format": "+880 1712-345678",
     "national_format": "01712-345678"
   },
+  "email_info": null,
   "gravatar": null,
   "response_time_ms": 214,
   "cached": false,
@@ -140,10 +141,38 @@ export const NOT_FOUND_RESPONSE = `{
     "international_format": "+1 415-555-2671",
     "national_format": "(415) 555-2671"
   },
+  "email_info": null,
   "gravatar": null,
   "response_time_ms": 187,
   "cached": false,
   "checked_at": "2026-07-23T10:04:12Z"
+}`;
+
+export const EMAIL_INFO_RESPONSE = `{
+  "email": "jane@acme.com",
+  "syntax_valid": true,
+  "domain": "acme.com",
+  "deliverable": true,
+  "mx_hosts": ["mx.acme.com"],
+  "disposable": false,
+  "role_account": false,
+  "free_provider": false,
+  "status": "valid",
+  "reason": null
+}`;
+
+/** A bad address is answered, not rejected — this is still a 200. */
+export const EMAIL_INFO_INVALID_RESPONSE = `{
+  "email": "jane@@acme",
+  "syntax_valid": false,
+  "domain": "acme",
+  "deliverable": null,
+  "mx_hosts": [],
+  "disposable": false,
+  "role_account": false,
+  "free_provider": false,
+  "status": "invalid_syntax",
+  "reason": "The part after the @-sign contains invalid characters: '@'."
 }`;
 
 export const GRAVATAR_RESPONSE = `{
@@ -235,10 +264,16 @@ export const RESPONSE_FIELDS = [
       "Facts about the number itself. Always there, even when the number has no WhatsApp account. See “Number details”.",
   },
   {
+    name: "email_info",
+    type: "object | null",
+    description:
+      "Our verdict on the email you sent: whether it is a real address, and whether its domain can receive mail. null if you sent no email. See “Email lookup”.",
+  },
+  {
     name: "gravatar",
     type: "object | null",
     description:
-      "The public Gravatar profile for the email you sent. null if you sent no email, or the email has no profile. See “Email lookup”.",
+      "The public Gravatar profile for the email you sent. null if you sent no email, the address was malformed, or it has no profile. See “Email lookup”.",
   },
   {
     name: "response_time_ms",
@@ -316,6 +351,76 @@ export const LINE_TYPES = [
   "pager",
   "uan",
   "voicemail",
+  "unknown",
+];
+
+export const EMAIL_INFO_FIELDS = [
+  {
+    name: "email",
+    type: "string",
+    description: "The address you sent, lowercased and tidied up.",
+  },
+  {
+    name: "syntax_valid",
+    type: "boolean",
+    description: "true if the address is written correctly and could exist.",
+  },
+  {
+    name: "domain",
+    type: "string | null",
+    description:
+      "The part after the @. Treat it as a guess when syntax_valid is false.",
+  },
+  {
+    name: "deliverable",
+    type: "boolean | null",
+    description:
+      "true if the domain has a mail server, false if it does not. null means we could not find out — that is not the same as false, so do not treat it as a bad address.",
+  },
+  {
+    name: "mx_hosts",
+    type: "string[]",
+    description:
+      "The domain's mail servers, best first. Empty when there are none.",
+  },
+  {
+    name: "disposable",
+    type: "boolean",
+    description:
+      "true for a known throwaway-inbox service. These do receive mail, which is exactly why it is worth knowing.",
+  },
+  {
+    name: "role_account",
+    type: "boolean",
+    description:
+      "true for a shared mailbox like info@ or support@. Real, but no one person behind it.",
+  },
+  {
+    name: "free_provider",
+    type: "boolean",
+    description:
+      "true for a consumer provider such as Gmail. Normal for a personal address.",
+  },
+  {
+    name: "status",
+    type: "string",
+    description:
+      "One word for the whole verdict: valid, invalid_syntax, domain_not_found, no_mail_server, disposable, or unknown.",
+  },
+  {
+    name: "reason",
+    type: "string | null",
+    description: "A sentence explaining status. null when the address is fine.",
+  },
+];
+
+/** Every value `email_info.status` can take. */
+export const EMAIL_STATUSES = [
+  "valid",
+  "invalid_syntax",
+  "domain_not_found",
+  "no_mail_server",
+  "disposable",
   "unknown",
 ];
 

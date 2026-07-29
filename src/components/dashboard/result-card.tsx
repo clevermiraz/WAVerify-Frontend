@@ -16,6 +16,7 @@ import * as React from "react";
 
 import {
   Detail,
+  EmailDetails,
   GravatarDetails,
   humanise,
   Muted,
@@ -85,6 +86,7 @@ export function ResultCard({ result, onSearchAgain }: ResultCardProps) {
           profile_photo_id: result.profile_photo_id,
           device_count: result.device_count,
           number_info: result.number_info,
+          email_info: result.email_info,
           gravatar: result.gravatar,
           response_time_ms: result.response_time_ms,
           cached: result.cached,
@@ -180,6 +182,8 @@ export function ResultCard({ result, onSearchAgain }: ResultCardProps) {
         )}
 
         {result.number_info && <NumberDetails info={result.number_info} />}
+
+        {result.email_info && <EmailDetails info={result.email_info} />}
 
         {result.gravatar && <GravatarDetails profile={result.gravatar} />}
 

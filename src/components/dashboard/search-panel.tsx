@@ -135,7 +135,7 @@ export function SearchPanel() {
                 htmlFor="email"
                 optional
                 error={errors.email?.message}
-                hint="If you know an email for this person, we also look it up on Gravatar."
+                hint="We check whether the address is real and can receive mail, and look it up on Gravatar."
               >
                 <Input
                   type="email"
@@ -164,7 +164,7 @@ export function SearchPanel() {
             ) : (
               <>
                 <Plus className="size-3.5" aria-hidden />
-                Add an email for more details
+                Add an email to verify it too
               </>
             )}
           </button>

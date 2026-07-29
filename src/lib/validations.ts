@@ -80,8 +80,14 @@ export const checkSchema = z.object({
     .min(7, "Enter a full number including the country code.")
     .max(20, "That number is too long.")
     .regex(/^\+?[\d\s\-()]+$/, "Only digits, spaces and + - ( ) are allowed."),
-  /** Optional: adds a Gravatar lookup. An empty field means "not supplied". */
-  email: email.optional().or(z.literal("")),
+  /**
+   * Optional, and deliberately not checked for shape — same reasoning as
+   * `phone`. The backend now verifies the address itself and reports the
+   * verdict in `email_info`, so rejecting a typo here would suppress the very
+   * answer the user asked for. It would also block the phone lookup, which is
+   * the part they actually came for. An empty field means "not supplied".
+   */
+  email: z.string().trim().max(254, "That email is too long.").optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

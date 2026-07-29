@@ -100,6 +100,54 @@ export interface NumberInfo {
   national_format: string | null;
 }
 
+/**
+ * One-word summary of `EmailInfo`. `disposable` outranks `valid`: those
+ * domains do deliver mail, which is exactly why they are worth calling out.
+ * The union stays open so a value added later does not break the build.
+ */
+export type EmailStatus =
+  | "valid"
+  | "invalid_syntax"
+  | "domain_not_found"
+  | "no_mail_server"
+  | "disposable"
+  | "unknown"
+  | (string & {});
+
+/**
+ * The verdict on the email sent with the check.
+ *
+ * Two things are established without contacting the mailbox: the address is
+ * written correctly, and its domain publishes somewhere to deliver mail. That
+ * is as far as it goes — proving one specific mailbox exists needs an SMTP
+ * probe, which gets the sender blocklisted. So `deliverable` means "this
+ * domain accepts mail", never "this person exists".
+ */
+export interface EmailInfo {
+  /** The address as sent, normalised and lowercased. */
+  email: string;
+  syntax_valid: boolean;
+  /** Best-effort only when `syntax_valid` is false. */
+  domain: string | null;
+  /**
+   * Tri-state, and the distinction matters: `null` means the check could not
+   * be completed (DNS timeout, or disabled server-side), not that the address
+   * is bad. Never collapse it into a falsy test.
+   */
+  deliverable: boolean | null;
+  /** Mail servers for the domain, primary first. Can be empty. */
+  mx_hosts: string[];
+  /** Known throwaway-inbox domain. Delivers mail, but is abandoned in minutes. */
+  disposable: boolean;
+  /** Shared or automated mailbox — `info@`, `support@`, `no-reply@`. */
+  role_account: boolean;
+  /** Consumer mailbox provider such as Gmail. Not a fault on its own. */
+  free_provider: boolean;
+  status: EmailStatus;
+  /** Plain-English explanation of `status`. null when the address is fine. */
+  reason: string | null;
+}
+
 export interface GravatarAccount {
   service: string;
   url: string;
@@ -137,7 +185,13 @@ export interface CheckResult {
   /** Documented as always present; typed nullable so a response from an older
    *  backend cannot crash the UI. */
   number_info: NumberInfo | null;
-  /** Only filled in when an email was sent and it has a Gravatar profile. */
+  /** The verdict on the email sent with the check. Null when none was sent. */
+  email_info: EmailInfo | null;
+  /**
+   * Only filled in when an email was sent, passed syntax, and has a Gravatar
+   * profile. A malformed address populates `email_info` but leaves this null,
+   * so the two do not always move together.
+   */
   gravatar: GravatarProfile | null;
   response_time_ms: number;
   cached: boolean;
@@ -145,10 +199,11 @@ export interface CheckResult {
 }
 
 /**
- * History keeps a smaller field set than a live check. `number_info` and
- * `gravatar` are stored, but only for lookups made after the backend started
- * saving them — both are null on older rows. `name_source`, `profile_photo_id`
- * and `device_count` are live-response only and never appear here.
+ * History keeps a smaller field set than a live check. `number_info`,
+ * `email_info` and `gravatar` are stored, but only for lookups made after the
+ * backend started saving them — all three are null on older rows.
+ * `name_source`, `profile_photo_id` and `device_count` are live-response only
+ * and never appear here.
  */
 export interface SearchLog {
   id: string;
@@ -159,6 +214,7 @@ export interface SearchLog {
   exists_on_whatsapp: boolean | null;
   display_name: string | null;
   number_info: NumberInfo | null;
+  email_info: EmailInfo | null;
   gravatar: GravatarProfile | null;
   response_time_ms: number;
   cached: boolean;
@@ -187,6 +243,7 @@ export interface SearchLogDetail {
   /** Expired long ago for anything but a very recent lookup. */
   profile_photo_url: string | null;
   number_info: NumberInfo | null;
+  email_info: EmailInfo | null;
   gravatar: GravatarProfile | null;
   /** Set when `status` is `failed` — e.g. `provider_error`. */
   error_code: string | null;

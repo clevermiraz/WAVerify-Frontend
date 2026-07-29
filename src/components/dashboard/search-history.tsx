@@ -1,9 +1,10 @@
 "use client";
 
-import { AtSign, SearchX } from "lucide-react";
+import { AtSign, SearchX, UserRound } from "lucide-react";
 import * as React from "react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { emailStatusTone } from "@/components/dashboard/lookup-details";
 import { Pagination } from "@/components/dashboard/pagination";
 import { SearchDetailDialog } from "@/components/dashboard/search-detail-dialog";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -20,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSearchHistory } from "@/hooks/use-api";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import type { LookupStatus, SearchLog } from "@/types/api";
 
 const PAGE_SIZE = 10;
@@ -136,11 +137,25 @@ export function SearchHistory() {
                           {log.display_name}
                         </span>
                       )}
+                      {/* The address that was checked, tinted when there was
+                        something wrong with it — so a bad email is visible
+                        without opening every row. */}
+                      {log.email_info && (
+                        <span
+                          className={cn(
+                            "flex items-center gap-1 truncate text-xs",
+                            emailStatusTone(log.email_info.status)
+                          )}
+                        >
+                          <AtSign className="size-3 shrink-0" aria-hidden />
+                          {log.email_info.email}
+                        </span>
+                      )}
                       {/* Named separately from the WhatsApp name so the two
                         sources are never confused. */}
                       {log.gravatar && (
                         <span className="text-muted-foreground flex items-center gap-1 truncate text-xs">
-                          <AtSign className="size-3 shrink-0" aria-hidden />
+                          <UserRound className="size-3 shrink-0" aria-hidden />
                           {log.gravatar.display_name ?? "Gravatar profile"}
                         </span>
                       )}

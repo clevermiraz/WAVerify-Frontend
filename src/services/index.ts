@@ -41,9 +41,10 @@ export { authService } from "./auth";
 
 export const verificationService = {
   /**
-   * `email` is optional enrichment: when given, the backend also looks the
-   * address up on Gravatar. It is omitted from the body entirely when absent,
-   * since an empty string would fail validation.
+   * `email` is optional: when given, the backend verifies the address and
+   * returns the verdict in `email_info`, and looks it up on Gravatar if it is
+   * well-formed. A malformed address is answered, not rejected — only an
+   * empty one must be omitted, since the field is absent rather than blank.
    */
   check: (phone: string, email?: string) =>
     api.post<CheckResult>(

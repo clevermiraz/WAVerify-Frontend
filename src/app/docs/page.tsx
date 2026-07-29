@@ -20,6 +20,10 @@ import {
   API_BASE_URL,
   CHECK_SAMPLES,
   CHECK_WITH_EMAIL_SAMPLE,
+  EMAIL_INFO_FIELDS,
+  EMAIL_INFO_INVALID_RESPONSE,
+  EMAIL_INFO_RESPONSE,
+  EMAIL_STATUSES,
   ERROR_CODES,
   ERROR_RESPONSE,
   GRAVATAR_FIELDS,
@@ -161,8 +165,8 @@ export default function DocsPage() {
                   </TableCell>
                   <TableCell className="text-sm">
                     Optional. If you know an email for this person, send it and
-                    we also look it up on Gravatar. Leave it out and nothing
-                    changes.
+                    we check whether it is a real, working address — and look it
+                    up on Gravatar. Leave it out and nothing changes.
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -173,9 +177,10 @@ export default function DocsPage() {
 
             <h3 className="mt-8 mb-3 font-medium">With an email</h3>
             <p className="mb-3">
-              The email is extra. It does not change the WhatsApp part of the
-              answer. If the email is not a real address, you get status{" "}
-              <Code>422</Code>.
+              The email is extra. It never changes the WhatsApp part of the
+              answer. A bad email does not fail the request either: you still
+              get status <Code>200</Code>, with the problem described in{" "}
+              <Code>email_info</Code>. See <Code>Email lookup</Code> below.
             </p>
             <CodeBlock code={CHECK_WITH_EMAIL_SAMPLE} />
           </Section>
@@ -247,12 +252,77 @@ export default function DocsPage() {
 
           <Section id="gravatar" title="Email lookup">
             <p>
-              If you send an <Code>email</Code>, we look it up on Gravatar and
-              put the public profile in <Code>gravatar</Code>.
+              Send an <Code>email</Code> and you get two things back:{" "}
+              <Code>email_info</Code>, our verdict on the address itself, and{" "}
+              <Code>gravatar</Code>, the public profile behind it.
+            </p>
+
+            <h3 className="mt-8 mb-3 font-medium">Is the email real?</h3>
+            <p>
+              We check two things without ever sending a message: the address
+              is written correctly, and its domain publishes somewhere to
+              deliver mail.
+            </p>
+            <p className="mt-4">
+              That is as far as anyone can honestly go. The only way to prove
+              one exact mailbox exists is to try to send to it, which gets the
+              sender blocked, so we do not do it. Read{" "}
+              <Code>deliverable</Code> as “this domain accepts mail”, not “this
+              person exists”.
+            </p>
+            <CodeBlock className="mt-5" code={EMAIL_INFO_RESPONSE} />
+
+            <h3 className="mt-8 mb-3 font-medium">A bad email is not an error</h3>
+            <p>
+              You still get status <Code>200</Code>, and the WhatsApp part of
+              the answer is unaffected. The problem is described in{" "}
+              <Code>email_info</Code> instead.
+            </p>
+            <CodeBlock
+              className="mt-5"
+              code={EMAIL_INFO_INVALID_RESPONSE}
+              language="200 OK"
+            />
+
+            <h3 className="mt-8 mb-3 font-medium">
+              <Code>deliverable</Code> has three values
+            </h3>
+            <p>
+              <Code>true</Code> and <Code>false</Code> mean what you expect.{" "}
+              <Code>null</Code> means we could not find out — usually the
+              domain lookup timed out.
+            </p>
+            <p className="mt-4">
+              <Code>null</Code> is not <Code>false</Code>. If your code does{" "}
+              <Code>if (!deliverable)</Code> it will call good addresses bad
+              whenever a lookup is slow. Check the three cases separately.
+            </p>
+
+            <div className="mt-6">
+              <FieldTable fields={EMAIL_INFO_FIELDS} />
+            </div>
+
+            <h3 className="mt-8 mb-3 font-medium">Values for status</h3>
+            <div className="flex flex-wrap gap-2">
+              {EMAIL_STATUSES.map((status) => (
+                <Code key={status}>{status}</Code>
+              ))}
+            </div>
+            <p className="mt-4">
+              <Code>disposable</Code> wins over <Code>valid</Code> when both
+              apply. Those addresses do receive mail — that is exactly why they
+              are worth flagging.
+            </p>
+
+            <h3 className="mt-8 mb-3 font-medium">Gravatar profile</h3>
+            <p>
+              We also look the address up on Gravatar and put any public
+              profile in <Code>gravatar</Code>.
             </p>
             <p className="mt-4">
               Most emails have no Gravatar profile, so expect <Code>null</Code>{" "}
-              often. Send no email and it is always <Code>null</Code>.
+              often. It is also <Code>null</Code> when you sent no email, or
+              when the address was too malformed to look up.
             </p>
             <CodeBlock className="mt-5" code={GRAVATAR_RESPONSE} />
             <p className="mt-5">

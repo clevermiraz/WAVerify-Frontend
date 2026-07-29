@@ -4,15 +4,22 @@
  * Presentation shared by the two places a lookup is shown: the live result
  * card and the history detail dialog. The two payloads differ in shape and in
  * which fields exist at all, so only the pieces that are genuinely identical —
- * the `number_info` and `gravatar` blocks, and the layout primitives — live
- * here.
+ * the `number_info`, `email_info` and `gravatar` blocks, and the layout
+ * primitives — live here.
  */
 
-import { ExternalLink, Globe, UserRound } from "lucide-react";
+import {
+  ExternalLink,
+  Globe,
+  MailCheck,
+  MailX,
+  UserRound,
+} from "lucide-react";
 import * as React from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { GravatarProfile, NumberInfo } from "@/types/api";
+import type { EmailInfo, GravatarProfile, NumberInfo } from "@/types/api";
 
 /** Human wording for the documented `name_source` values. */
 export const NAME_SOURCES: Record<string, string> = {
@@ -144,6 +151,116 @@ export function NumberDetails({ info }: { info: NumberInfo }) {
         )}
       </Detail>
     </Section>
+  );
+}
+
+/**
+ * How each `email_info.status` is worded and coloured.
+ *
+ * `disposable` is amber rather than red on purpose: those addresses receive
+ * mail perfectly well, so calling them broken would be wrong — they are a
+ * caution, not a failure. `unknown` is neutral for the same reason in
+ * reverse: it says nothing about the address, only about our check.
+ */
+const EMAIL_STATUSES: Record<
+  string,
+  { label: string; variant: "success" | "warning" | "destructive" | "muted" }
+> = {
+  valid: { label: "Looks good", variant: "success" },
+  invalid_syntax: { label: "Not a valid address", variant: "destructive" },
+  domain_not_found: { label: "Domain does not exist", variant: "destructive" },
+  no_mail_server: { label: "Cannot receive mail", variant: "destructive" },
+  disposable: { label: "Throwaway address", variant: "warning" },
+  unknown: { label: "Could not check", variant: "muted" },
+};
+
+/**
+ * Text colour for an `email_info.status`, for the compact places that show the
+ * address without room for a badge. Anything unproblematic stays muted so a
+ * list is not covered in colour.
+ */
+export function emailStatusTone(status: string): string {
+  const variant = EMAIL_STATUSES[status]?.variant;
+  if (variant === "destructive") return "text-destructive";
+  if (variant === "warning") return "text-warning";
+  return "text-muted-foreground";
+}
+
+/**
+ * The backend's verdict on the email that was searched with.
+ *
+ * `deliverable` is deliberately read as three states. A null means the DNS
+ * check could not be completed, which is our problem, not the address's —
+ * showing it as "no" would accuse a perfectly good email.
+ */
+export function EmailDetails({ info }: { info: EmailInfo }) {
+  const status = EMAIL_STATUSES[info.status] ?? {
+    label: humanise(info.status),
+    variant: "muted" as const,
+  };
+
+  // Neither is a fault, so they are listed as plain facts rather than warnings.
+  const traits = [
+    info.role_account && "Shared or automated mailbox",
+    info.free_provider && "Consumer email provider",
+  ].filter(Boolean) as string[];
+
+  return (
+    <section className="mt-6 border-t pt-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <h3 className="text-muted-foreground text-xs tracking-wide uppercase">
+          Email
+        </h3>
+        <Badge variant={status.variant}>{status.label}</Badge>
+      </div>
+
+      <p className="mt-3 font-mono text-sm break-all">{info.email}</p>
+
+      {info.reason && (
+        <p className="text-muted-foreground mt-1.5 text-sm">{info.reason}</p>
+      )}
+
+      <dl className="mt-5 grid gap-5 sm:grid-cols-3">
+        <Detail label="Can receive mail">
+          {info.deliverable === true ? (
+            <span className="flex items-center gap-1.5">
+              <MailCheck className="size-3.5" aria-hidden />
+              Yes
+            </span>
+          ) : info.deliverable === false ? (
+            <span className="flex items-center gap-1.5">
+              <MailX className="size-3.5" aria-hidden />
+              No
+            </span>
+          ) : (
+            // Not "No" — we did not find out.
+            <Muted>Could not check</Muted>
+          )}
+        </Detail>
+
+        <Detail label="Domain">
+          {info.domain ? (
+            <span className="font-mono">{info.domain}</span>
+          ) : (
+            <Unknown />
+          )}
+        </Detail>
+
+        <Detail label="Mail server">
+          {info.mx_hosts.length > 0 ? (
+            <span className="font-mono break-all">{info.mx_hosts[0]}</span>
+          ) : (
+            <Muted>None</Muted>
+          )}
+        </Detail>
+
+        {traits.length > 0 && (
+          <Detail label="Also worth knowing" className="sm:col-span-3">
+            {traits.join(" · ")}
+          </Detail>
+        )}
+      </dl>
+    </section>
   );
 }
 

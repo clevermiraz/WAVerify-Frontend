@@ -5,6 +5,7 @@ import * as React from "react";
 
 import {
   Detail,
+  EmailDetails,
   GravatarDetails,
   Muted,
   NumberDetails,
@@ -146,6 +147,8 @@ function DetailBody({ detail }: { detail: SearchLogDetail }) {
           searches have them.
         </p>
       )}
+
+      {detail.email_info && <EmailDetails info={detail.email_info} />}
 
       {detail.gravatar && <GravatarDetails profile={detail.gravatar} />}
 
