@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button";
 const SAMPLE_RESPONSE = `{
   "success": true,
   "exists": true,
-  "display_name": "John Doe",
-  "about": "Software Engineer",
-  "business": false,
-  "profile_photo": "https://…",
+  "display_name": "Acme Store",
+  "name_source": "business_verified",
+  "about": "Open 9-6, Sat closed",
+  "business": true,
+  "device_count": 2,
+  "number_info": {
+    "location": "Bangladesh",
+    "carrier": "Grameenphone",
+    "line_type": "mobile"
+  },
   "response_time_ms": 214
 }`;
 

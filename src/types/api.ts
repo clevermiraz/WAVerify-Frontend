@@ -57,19 +57,99 @@ export interface Page<T> extends PageMeta {
   items: T[];
 }
 
+/**
+ * Where `display_name` came from, which is what explains a missing name.
+ * The listed values are the ones the backend documents today; the union stays
+ * open so a source added later does not break the build — the UI falls back to
+ * the raw value.
+ */
+export type NameSource =
+  | "business_verified"
+  | "business_name"
+  | "contact_name"
+  | (string & {});
+
+export type LineType =
+  | "mobile"
+  | "fixed_line"
+  | "fixed_line_or_mobile"
+  | "toll_free"
+  | "premium_rate"
+  | "shared_cost"
+  | "personal_number"
+  | "pager"
+  | "uan"
+  | "voicemail"
+  | "unknown"
+  | (string & {});
+
+/**
+ * Facts derived from the number itself, with no WhatsApp involvement, so they
+ * are filled in even when the number has no account. `line_type` always has a
+ * value (`unknown` when undetermined); everything else can be null or empty.
+ */
+export interface NumberInfo {
+  country_code: string | null;
+  /** ISO 3166-1 alpha-2, e.g. `BD`. */
+  region: string | null;
+  location: string | null;
+  carrier: string | null;
+  line_type: LineType;
+  timezones: string[];
+  international_format: string | null;
+  national_format: string | null;
+}
+
+export interface GravatarAccount {
+  service: string;
+  url: string;
+}
+
+/** Public Gravatar profile for the email sent with the check. */
+export interface GravatarProfile {
+  display_name: string | null;
+  about: string | null;
+  location: string | null;
+  job_title: string | null;
+  company: string | null;
+  pronouns: string | null;
+  avatar_url: string | null;
+  profile_url: string | null;
+  verified_accounts: GravatarAccount[];
+}
+
 export interface CheckResult {
   success: boolean;
   phone: string;
   exists: boolean;
   display_name: string | null;
+  /** Null for most personal accounts — WhatsApp does not give a stranger the
+   *  name. That is normal, not a failed lookup. */
+  name_source: NameSource | null;
   about: string | null;
   business: boolean;
+  /** Expires within hours. Render it, never store it. */
   profile_photo: string | null;
+  /** Changes when the account changes its picture, so it survives the URL. */
+  profile_photo_id: string | null;
+  /** 1 means phone only; more means WhatsApp Web or Desktop is linked. */
+  device_count: number | null;
+  /** Documented as always present; typed nullable so a response from an older
+   *  backend cannot crash the UI. */
+  number_info: NumberInfo | null;
+  /** Only filled in when an email was sent and it has a Gravatar profile. */
+  gravatar: GravatarProfile | null;
   response_time_ms: number;
   cached: boolean;
   checked_at: string;
 }
 
+/**
+ * History keeps a smaller field set than a live check. `number_info` and
+ * `gravatar` are stored, but only for lookups made after the backend started
+ * saving them — both are null on older rows. `name_source`, `profile_photo_id`
+ * and `device_count` are live-response only and never appear here.
+ */
 export interface SearchLog {
   id: string;
   phone_number: string;
@@ -78,6 +158,38 @@ export interface SearchLog {
   source: LookupSource;
   exists_on_whatsapp: boolean | null;
   display_name: string | null;
+  number_info: NumberInfo | null;
+  gravatar: GravatarProfile | null;
+  response_time_ms: number;
+  cached: boolean;
+  created_at: string;
+}
+
+/**
+ * One stored lookup in full, from `GET /searches/{id}`.
+ *
+ * The WhatsApp fields use the stored column names rather than the live
+ * response's, so this is not an extension of `CheckResult`. `name_source`,
+ * `profile_photo_id` and `device_count` are never here — they are only ever
+ * on a fresh check.
+ */
+export interface SearchLogDetail {
+  id: string;
+  phone_number: string;
+  /** Not documented on this route; guarded everywhere it is read. */
+  country_code?: string | null;
+  source?: LookupSource;
+  status: LookupStatus;
+  exists_on_whatsapp: boolean | null;
+  display_name: string | null;
+  about: string | null;
+  is_business: boolean;
+  /** Expired long ago for anything but a very recent lookup. */
+  profile_photo_url: string | null;
+  number_info: NumberInfo | null;
+  gravatar: GravatarProfile | null;
+  /** Set when `status` is `failed` — e.g. `provider_error`. */
+  error_code: string | null;
   response_time_ms: number;
   cached: boolean;
   created_at: string;

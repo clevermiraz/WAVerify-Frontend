@@ -24,6 +24,7 @@ export const queryKeys = {
   billing: ["billing"] as const,
   payments: ["payments"] as const,
   history: (params: object) => ["history", params] as const,
+  historyDetail: (id: string) => ["history", "detail", id] as const,
   admin: {
     stats: ["admin", "stats"] as const,
     users: (params: object) => ["admin", "users", params] as const,
@@ -100,17 +101,31 @@ export function useSearchHistory(params: {
 }
 
 /**
+ * One stored lookup in full. Pass `null` while nothing is selected — a past
+ * check never changes, so what is fetched once is kept.
+ */
+export function useSearchDetail(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.historyDetail(id ?? ""),
+    queryFn: () => verificationService.historyDetail(id!),
+    enabled: id !== null,
+    staleTime: Infinity,
+  });
+}
+
+/**
  * Runs a lookup and invalidates everything the result affects — history,
  * usage counters and the dashboard summary.
  *
- * Per-call callbacks belong on `mutate(phone, { onSuccess })` at the call
+ * Per-call callbacks belong on `mutate(input, { onSuccess })` at the call
  * site; this hook owns only the cache invalidation.
  */
 export function useCheckNumber() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (phone: string) => verificationService.check(phone),
+    mutationFn: ({ phone, email }: { phone: string; email?: string }) =>
+      verificationService.check(phone, email),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["history"] });
       void queryClient.invalidateQueries({ queryKey: ["usage"] });

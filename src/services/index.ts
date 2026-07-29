@@ -26,6 +26,7 @@ import type {
   Plan,
   PortalResponse,
   SearchLog,
+  SearchLogDetail,
   SystemSettings,
   UpdatePlanRequest,
   UsageOverview,
@@ -39,7 +40,17 @@ import type {
 export { authService } from "./auth";
 
 export const verificationService = {
-  check: (phone: string) => api.post<CheckResult>("/check", { phone }, { timeoutMs: 10_000 }),
+  /**
+   * `email` is optional enrichment: when given, the backend also looks the
+   * address up on Gravatar. It is omitted from the body entirely when absent,
+   * since an empty string would fail validation.
+   */
+  check: (phone: string, email?: string) =>
+    api.post<CheckResult>(
+      "/check",
+      email ? { phone, email } : { phone },
+      { timeoutMs: 10_000 }
+    ),
 
   history: (params: {
     page?: number;
@@ -47,6 +58,9 @@ export const verificationService = {
     status?: LookupStatus | "";
     q?: string;
   }) => api.get<Page<SearchLog>>(`/searches${buildQuery(params)}`),
+
+  // 404s for an id belonging to another user, so a miss is never a leak.
+  historyDetail: (id: string) => api.get<SearchLogDetail>(`/searches/${id}`),
 };
 
 export const apiKeyService = {

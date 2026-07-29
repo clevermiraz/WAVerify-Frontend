@@ -80,6 +80,8 @@ export const checkSchema = z.object({
     .min(7, "Enter a full number including the country code.")
     .max(20, "That number is too long.")
     .regex(/^\+?[\d\s\-()]+$/, "Only digits, spaces and + - ( ) are allowed."),
+  /** Optional: adds a Gravatar lookup. An empty field means "not supplied". */
+  email: email.optional().or(z.literal("")),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

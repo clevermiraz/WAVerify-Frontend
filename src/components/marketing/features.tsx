@@ -18,7 +18,7 @@ const FEATURES = [
     icon: Terminal,
     title: "One clean endpoint",
     description:
-      "A single POST returns everything: existence, display name, about text, business flag and profile photo.",
+      "A single POST returns everything: existence, profile details, and the country, carrier and line type behind the number.",
   },
   {
     icon: Building2,

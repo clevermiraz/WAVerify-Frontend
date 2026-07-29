@@ -19,9 +19,14 @@ import {
 import {
   API_BASE_URL,
   CHECK_SAMPLES,
+  CHECK_WITH_EMAIL_SAMPLE,
   ERROR_CODES,
   ERROR_RESPONSE,
+  GRAVATAR_FIELDS,
+  GRAVATAR_RESPONSE,
+  LINE_TYPES,
   NOT_FOUND_RESPONSE,
+  NUMBER_INFO_FIELDS,
   RESPONSE_FIELDS,
   SUCCESS_RESPONSE,
 } from "@/lib/code-samples";
@@ -50,7 +55,8 @@ export default function DocsPage() {
             </h1>
             <p className="text-muted-foreground mt-4 text-lg leading-relaxed">
               You send a phone number. We tell you if it has a WhatsApp
-              account. That is the whole API.
+              account, plus what we know about the number. That is the whole
+              API.
             </p>
           </header>
 
@@ -148,11 +154,30 @@ export default function DocsPage() {
                     <Code>+8801712345678</Code>.
                   </TableCell>
                 </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">email</TableCell>
+                  <TableCell className="text-muted-foreground font-mono text-xs">
+                    string
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    Optional. If you know an email for this person, send it and
+                    we also look it up on Gravatar. Leave it out and nothing
+                    changes.
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
 
             <h3 className="mt-8 mb-3 font-medium">Example request</h3>
             <CodeTabs samples={CHECK_SAMPLES} />
+
+            <h3 className="mt-8 mb-3 font-medium">With an email</h3>
+            <p className="mb-3">
+              The email is extra. It does not change the WhatsApp part of the
+              answer. If the email is not a real address, you get status{" "}
+              <Code>422</Code>.
+            </p>
+            <CodeBlock code={CHECK_WITH_EMAIL_SAMPLE} />
           </Section>
 
           <Section id="responses" title="What you get back">
@@ -170,30 +195,73 @@ export default function DocsPage() {
             <CodeBlock code={NOT_FOUND_RESPONSE} language="200 OK" />
 
             <h3 className="mt-8 mb-3 font-medium">Fields in the answer</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Field</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Description</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {RESPONSE_FIELDS.map((field) => (
-                  <TableRow key={field.name}>
-                    <TableCell className="font-mono text-xs whitespace-nowrap">
-                      {field.name}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground font-mono text-xs whitespace-nowrap">
-                      {field.type}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {field.description}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <FieldTable fields={RESPONSE_FIELDS} />
+
+            <h3 className="mt-8 mb-3 font-medium">Names, and why they are missing</h3>
+            <p>
+              Business accounts give you a real name. Personal accounts almost
+              never do: WhatsApp does not show a personal name to someone who
+              is not a contact. So <Code>display_name</Code> is usually{" "}
+              <Code>null</Code> for a normal person.
+            </p>
+            <p className="mt-4">
+              This is not an error. Do not show it to your users as one. Use{" "}
+              <Code>name_source</Code> to explain what you did get.
+            </p>
+            <p className="mt-4">
+              <Code>about</Code> and <Code>profile_photo</Code> do come back
+              for personal accounts, as long as the person kept the normal
+              privacy setting. They are <Code>null</Code> if the person hid
+              them.
+            </p>
+
+            <h3 className="mt-8 mb-3 font-medium">Profile pictures expire</h3>
+            <p>
+              <Code>profile_photo</Code> is a WhatsApp link that stops working
+              after a few hours. Do not save the link. If you need the picture,
+              download it and keep your own copy.
+            </p>
+            <p className="mt-4">
+              To spot a new picture without downloading anything, save{" "}
+              <Code>profile_photo_id</Code> and compare it next time.
+            </p>
+          </Section>
+
+          <Section id="number-info" title="Number details">
+            <p>
+              Every answer has a <Code>number_info</Code> object. It comes from
+              the number itself, not from WhatsApp, so it is filled in even
+              when <Code>exists</Code> is <Code>false</Code>.
+            </p>
+            <div className="mt-6">
+              <FieldTable fields={NUMBER_INFO_FIELDS} />
+            </div>
+
+            <h3 className="mt-8 mb-3 font-medium">Values for line_type</h3>
+            <div className="flex flex-wrap gap-2">
+              {LINE_TYPES.map((type) => (
+                <Code key={type}>{type}</Code>
+              ))}
+            </div>
+          </Section>
+
+          <Section id="gravatar" title="Email lookup">
+            <p>
+              If you send an <Code>email</Code>, we look it up on Gravatar and
+              put the public profile in <Code>gravatar</Code>.
+            </p>
+            <p className="mt-4">
+              Most emails have no Gravatar profile, so expect <Code>null</Code>{" "}
+              often. Send no email and it is always <Code>null</Code>.
+            </p>
+            <CodeBlock className="mt-5" code={GRAVATAR_RESPONSE} />
+            <p className="mt-5">
+              Every field inside can be <Code>null</Code> — people fill in only
+              what they want to.
+            </p>
+            <div className="mt-6">
+              <FieldTable fields={GRAVATAR_FIELDS} />
+            </div>
           </Section>
 
           <Section id="errors" title="Errors">
@@ -286,6 +354,40 @@ export default function DocsPage() {
 
       <SiteFooter />
     </div>
+  );
+}
+
+interface FieldRow {
+  name: string;
+  type: string;
+  description: string;
+}
+
+/** Shared shape for the three "fields in this object" reference tables. */
+function FieldTable({ fields }: { fields: FieldRow[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Field</TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead>Description</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {fields.map((field) => (
+          <TableRow key={field.name}>
+            <TableCell className="font-mono text-xs whitespace-nowrap">
+              {field.name}
+            </TableCell>
+            <TableCell className="text-muted-foreground font-mono text-xs whitespace-nowrap">
+              {field.type}
+            </TableCell>
+            <TableCell className="text-sm">{field.description}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 

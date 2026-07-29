@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  BadgeCheck,
   Building2,
   Check,
   Clock,
   Copy,
+  MonitorSmartphone,
   RotateCcw,
   UserRound,
   XCircle,
@@ -12,12 +14,22 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
+import {
+  Detail,
+  GravatarDetails,
+  humanise,
+  Muted,
+  NAME_SOURCES,
+  NumberDetails,
+  ProfileAvatar,
+  Section,
+  Unknown,
+} from "@/components/dashboard/lookup-details";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCopy } from "@/hooks/use-copy";
-import { cn } from "@/lib/utils";
 import type { CheckResult } from "@/types/api";
 
 export function ResultSkeleton() {
@@ -63,12 +75,20 @@ export function ResultCard({ result, onSearchAgain }: ResultCardProps) {
       JSON.stringify(
         {
           success: result.success,
+          phone: result.phone,
           exists: result.exists,
           display_name: result.display_name,
+          name_source: result.name_source,
           about: result.about,
           business: result.business,
           profile_photo: result.profile_photo,
+          profile_photo_id: result.profile_photo_id,
+          device_count: result.device_count,
+          number_info: result.number_info,
+          gravatar: result.gravatar,
           response_time_ms: result.response_time_ms,
+          cached: result.cached,
+          checked_at: result.checked_at,
         },
         null,
         2
@@ -80,14 +100,26 @@ export function ResultCard({ result, onSearchAgain }: ResultCardProps) {
     <Card>
       <CardContent className="p-6">
         <div className="flex flex-wrap items-start gap-4">
-          <Avatar result={result} />
+          <ProfileAvatar
+            name={result.display_name}
+            photo={result.profile_photo}
+            exists={result.exists}
+          />
 
           <div className="min-w-0 flex-1">
             <p className="font-mono text-sm font-medium">{result.phone}</p>
-            <p className="mt-1 truncate text-lg font-semibold">
-              {result.exists
-                ? (result.display_name ?? "Name not public")
-                : "No account"}
+            <p className="mt-1 flex items-center gap-1.5 text-lg font-semibold">
+              <span className="truncate">
+                {result.exists
+                  ? (result.display_name ?? "Name not public")
+                  : "No account"}
+              </span>
+              {result.name_source === "business_verified" && (
+                <BadgeCheck
+                  className="text-success size-4 shrink-0"
+                  aria-label="Verified business"
+                />
+              )}
             </p>
           </div>
 
@@ -107,7 +139,7 @@ export function ResultCard({ result, onSearchAgain }: ResultCardProps) {
         </div>
 
         {result.exists && (
-          <dl className="mt-6 grid gap-5 border-t pt-6 sm:grid-cols-3">
+          <Section title="WhatsApp profile">
             <Detail label="Account type">
               <span className="flex items-center gap-1.5">
                 {result.business ? (
@@ -124,13 +156,32 @@ export function ResultCard({ result, onSearchAgain }: ResultCardProps) {
               </span>
             </Detail>
 
-            <Detail label="About" className="sm:col-span-2">
-              {result.about ?? (
-                <span className="text-muted-foreground">Not set</span>
+            <Detail label="Name from">
+              <NameSource result={result} />
+            </Detail>
+
+            <Detail label="Devices">
+              {result.device_count === null ? (
+                <Unknown />
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <MonitorSmartphone className="size-3.5" aria-hidden />
+                  {result.device_count === 1
+                    ? "Phone only"
+                    : `${result.device_count} devices`}
+                </span>
               )}
             </Detail>
-          </dl>
+
+            <Detail label="About" className="sm:col-span-3">
+              {result.about ?? <Muted>Not set</Muted>}
+            </Detail>
+          </Section>
         )}
+
+        {result.number_info && <NumberDetails info={result.number_info} />}
+
+        {result.gravatar && <GravatarDetails profile={result.gravatar} />}
 
         <dl className="mt-6 grid gap-5 border-t pt-6 sm:grid-cols-3">
           <Detail label="Response time">
@@ -188,68 +239,18 @@ export function ResultCard({ result, onSearchAgain }: ResultCardProps) {
   );
 }
 
-function Detail({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <dt className="text-muted-foreground text-xs tracking-wide uppercase">
-        {label}
-      </dt>
-      <dd className="mt-1.5 text-sm font-medium">{children}</dd>
-    </div>
-  );
-}
-
-function initials(name: string | null): string | null {
-  if (!name?.trim()) return null;
-  const parts = name.trim().split(/\s+/);
-  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
-}
-
-function Avatar({ result }: { result: CheckResult }) {
-  const [failed, setFailed] = React.useState(false);
-  const showImage = result.exists && result.profile_photo && !failed;
-  const label = initials(result.display_name);
-
-  return (
-    <div
-      className={cn(
-        "relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full border",
-        result.exists ? "bg-success-muted" : "bg-muted"
-      )}
-    >
-      {/* Rendered underneath the photo rather than instead of it, so a slow
-          or blocked image never leaves an empty circle. */}
-      {result.exists && label ? (
-        <span className="text-success text-sm font-semibold">{label}</span>
-      ) : (
-        <UserRound
-          className={cn(
-            "size-6",
-            result.exists ? "text-success" : "text-muted-foreground"
-          )}
-          aria-hidden
-        />
-      )}
-
-      {showImage && (
-        // A plain <img>: the URL comes from the provider at runtime and is
-        // not a known remote pattern, so next/image cannot optimise it.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={result.profile_photo!}
-          alt=""
-          className="absolute inset-0 size-full object-cover"
-          onError={() => setFailed(true)}
-        />
-      )}
-    </div>
-  );
+/**
+ * A missing name on a personal account is the normal case — WhatsApp does not
+ * give a stranger the name — so it is explained rather than shown as a gap.
+ */
+function NameSource({ result }: { result: CheckResult }) {
+  if (result.name_source) {
+    return (
+      <>{NAME_SOURCES[result.name_source] ?? humanise(result.name_source)}</>
+    );
+  }
+  if (!result.display_name && !result.business) {
+    return <Muted>Personal accounts do not share a name</Muted>;
+  }
+  return <Unknown />;
 }

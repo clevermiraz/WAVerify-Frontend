@@ -4,6 +4,8 @@ const SECTIONS = [
   { id: "authentication", label: "Your API key" },
   { id: "check", label: "Check a number" },
   { id: "responses", label: "What you get back" },
+  { id: "number-info", label: "Number details" },
+  { id: "gravatar", label: "Email lookup" },
   { id: "errors", label: "Errors" },
   { id: "rate-limits", label: "Limits" },
   { id: "help", label: "Need help?" },
