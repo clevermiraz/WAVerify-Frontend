@@ -90,6 +90,19 @@ export const checkSchema = z.object({
   email: z.string().trim().max(254, "That email is too long.").optional(),
 });
 
+/**
+ * The standalone email check. Only emptiness is caught here — the shape is
+ * the backend's answer to give, and rejecting it locally would hide the very
+ * verdict the user asked for.
+ */
+export const emailCheckSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter an email address.")
+    .max(254, "That email is too long."),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
@@ -99,3 +112,4 @@ export type ProfileInput = z.infer<typeof profileSchema>;
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 export type ApiKeyInput = z.infer<typeof apiKeySchema>;
 export type CheckInput = z.infer<typeof checkSchema>;
+export type EmailCheckInput = z.infer<typeof emailCheckSchema>;

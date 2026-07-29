@@ -1,7 +1,14 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, QrCode, RefreshCcw, Trash2 } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  QrCode,
+  RefreshCcw,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -202,6 +209,23 @@ export function AdminWhatsAppAccounts() {
         </Button>
       </CardHeader>
       <CardContent>
+        {/* The single fact that matters: with no usable account, every number
+            lookup returns 502 no matter how healthy the rows below look. */}
+        {!isLoading && data && data.usable_accounts === 0 && (
+          <div className="border-destructive/40 bg-destructive/10 text-destructive mb-4 flex items-start gap-2 rounded-lg border p-3 text-sm">
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <div>
+              <p className="font-medium">No account is connected.</p>
+              <p className="mt-0.5">
+                Phone number checks are failing right now. Pair an account, or
+                re-pair one showing <span className="font-mono">disconnected</span>{" "}
+                or <span className="font-mono">not_loaded</span>. Email checks are
+                unaffected.
+              </p>
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex h-32 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -231,7 +255,8 @@ export function AdminWhatsAppAccounts() {
                         account.status === "connected"
                           ? "default"
                           : account.status === "error" ||
-                              account.status === "disconnected"
+                              account.status === "disconnected" ||
+                              account.status === "not_loaded"
                             ? "destructive"
                             : "secondary"
                       }
@@ -243,6 +268,15 @@ export function AdminWhatsAppAccounts() {
                     >
                       {account.status}
                     </Badge>
+                    {/* The saved status outlives a restart, so when it
+                        disagrees it is stale — say so rather than showing two
+                        badges that look equally authoritative. */}
+                    {account.stored_status &&
+                      account.stored_status !== account.status && (
+                        <p className="text-muted-foreground mt-1 text-xs">
+                          Last saved as {account.stored_status}
+                        </p>
+                      )}
                   </TableCell>
                   <TableCell className="text-right">
                     {account.total_lookups_performed.toLocaleString()}

@@ -17,6 +17,7 @@ import type {
   CheckoutResponse,
   CheckResult,
   CreatedApiKey,
+  EmailCheckResult,
   InvoiceResponse,
   CreatePlanRequest,
   DashboardStats,
@@ -52,6 +53,14 @@ export const verificationService = {
       email ? { phone, email } : { phone },
       { timeoutMs: 10_000 }
     ),
+
+  /**
+   * The email on its own. Separate from `check` because it never touches
+   * WhatsApp: it keeps working when the account pool is down, and it does not
+   * spend a request from the monthly quota.
+   */
+  checkEmail: (email: string) =>
+    api.post<EmailCheckResult>("/check/email", { email }, { timeoutMs: 10_000 }),
 
   history: (params: {
     page?: number;

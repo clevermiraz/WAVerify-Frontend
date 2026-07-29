@@ -1,25 +1,68 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Plus, Search, X } from "lucide-react";
+import { AlertCircle, AtSign, Phone, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 
+import {
+  EmailResultCard,
+  EmailResultSkeleton,
+} from "@/components/dashboard/email-result-card";
 import { ResultCard, ResultSkeleton } from "@/components/dashboard/result-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useCheckNumber } from "@/hooks/use-api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCheckEmail, useCheckNumber } from "@/hooks/use-api";
 import { ApiError } from "@/lib/api-client";
-import { checkSchema, type CheckInput } from "@/lib/validations";
-import type { CheckResult } from "@/types/api";
+import {
+  checkSchema,
+  emailCheckSchema,
+  type CheckInput,
+  type EmailCheckInput,
+} from "@/lib/validations";
+import type { CheckResult, EmailCheckResult } from "@/types/api";
 
 const EXAMPLES = ["+8801712345678", "+14155552671", "+442071838750"];
 
+type Mode = "phone" | "email";
+
 export function SearchPanel() {
+  const [mode, setMode] = React.useState<Mode>("phone");
+
+  return (
+    <div className="space-y-6">
+      <Tabs value={mode} onValueChange={(value) => setMode(value as Mode)}>
+        <TabsList>
+          <TabsTrigger value="phone">
+            <Phone className="size-3.5" aria-hidden />
+            Phone number
+          </TabsTrigger>
+          <TabsTrigger value="email">
+            <AtSign className="size-3.5" aria-hidden />
+            Email
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Each panel keeps its own form and result, so switching tabs to
+            compare does not throw away what the other one found. */}
+        <TabsContent value="phone" className="mt-6">
+          <PhoneSearch />
+        </TabsContent>
+
+        <TabsContent value="email" className="mt-6">
+          <EmailSearch />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function PhoneSearch() {
   const [result, setResult] = React.useState<CheckResult | null>(null);
   const [error, setError] = React.useState<ApiError | null>(null);
   // The email is extra enrichment, so it stays out of the way until asked for.
@@ -202,12 +245,139 @@ export function SearchPanel() {
                 Upgrade your plan →
               </Link>
             )}
+            {/* The email tab does not touch WhatsApp, so it still works when
+                the account pool is down — worth saying at the moment it fails
+                rather than leaving them stuck. */}
+            {error.code === "no_accounts" && (
+              <p>
+                Checking an email on its own is unaffected — use the Email tab
+                above.
+              </p>
+            )}
           </AlertDescription>
         </Alert>
       )}
 
       {result && !check.isPending && (
         <ResultCard result={result} onSearchAgain={searchAgain} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The email on its own. Hits a route that never contacts WhatsApp, so it keeps
+ * working when a number lookup cannot, and it spends no quota.
+ */
+function EmailSearch() {
+  const [result, setResult] = React.useState<EmailCheckResult | null>(null);
+  const [error, setError] = React.useState<ApiError | null>(null);
+  const check = useCheckEmail();
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setError: setFieldError,
+    reset,
+    formState: { errors },
+  } = useForm<EmailCheckInput>({
+    resolver: zodResolver(emailCheckSchema),
+    defaultValues: { email: "" },
+  });
+
+  const { ref: emailRef, ...emailField } = register("email");
+
+  const onSubmit = handleSubmit((values) => {
+    setError(null);
+    setResult(null);
+
+    check.mutate(values.email, {
+      onSuccess: setResult,
+      onError: (mutationError) => {
+        if (mutationError instanceof ApiError) {
+          // The only 422 left is a too-long address; a malformed one comes
+          // back as a normal result with the problem described in it.
+          if (mutationError.fieldErrors.email) {
+            setFieldError("email", {
+              message: mutationError.fieldErrors.email,
+            });
+          } else if (mutationError.status === 422) {
+            setFieldError("email", { message: mutationError.message });
+          } else {
+            setError(mutationError);
+          }
+        } else {
+          setError(
+            new ApiError(0, "unknown", "Something went wrong. Please try again.")
+          );
+        }
+      },
+    });
+  });
+
+  const searchAgain = React.useCallback(() => {
+    setResult(null);
+    setError(null);
+    reset({ email: "" });
+    inputRef.current?.focus();
+  }, [reset]);
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="p-6">
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <Field
+                label="Email address"
+                htmlFor="email-only"
+                error={errors.email?.message}
+                hint="We check the address is well formed and its domain can receive mail."
+                className="flex-1"
+              >
+                <Input
+                  id="email-only"
+                  type="email"
+                  autoComplete="off"
+                  placeholder="someone@example.com"
+                  {...emailField}
+                  ref={(element) => {
+                    emailRef(element);
+                    inputRef.current = element;
+                  }}
+                />
+              </Field>
+
+              <Button
+                type="submit"
+                size="lg"
+                loading={check.isPending}
+                className="sm:mb-6"
+              >
+                {!check.isPending && <Search />}
+                Check email
+              </Button>
+            </div>
+          </form>
+
+          <p className="text-muted-foreground mt-4 text-xs">
+            Checking an email does not use any of your monthly requests.
+          </p>
+        </CardContent>
+      </Card>
+
+      {check.isPending && <EmailResultSkeleton />}
+
+      {error && !check.isPending && (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertDescription>{error.message}</AlertDescription>
+        </Alert>
+      )}
+
+      {result && !check.isPending && (
+        <EmailResultCard result={result} onSearchAgain={searchAgain} />
       )}
     </div>
   );

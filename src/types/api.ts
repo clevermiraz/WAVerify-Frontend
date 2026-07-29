@@ -148,6 +148,22 @@ export interface EmailInfo {
   reason: string | null;
 }
 
+/**
+ * What `POST /check/email` returns — the email on its own.
+ *
+ * This route never contacts WhatsApp, so it keeps answering when a number
+ * lookup cannot, and it does not use up any of the monthly request quota.
+ */
+export interface EmailCheckResult {
+  success: boolean;
+  email: string;
+  email_info: EmailInfo;
+  gravatar: GravatarProfile | null;
+  response_time_ms: number;
+  cached: boolean;
+  checked_at: string;
+}
+
 export interface GravatarAccount {
   service: string;
   url: string;
@@ -389,7 +405,25 @@ export interface AdminStats {
 export interface WhatsAppAccount {
   id: string;
   phone_number: string | null;
-  status: "initializing" | "pairing" | "connected" | "disconnected" | "error";
+  /**
+   * The live status the pool is using for lookups right now. `not_loaded`
+   * means the running process has no client for this account at all — the row
+   * exists, but nothing is connecting it.
+   */
+  status:
+    | "initializing"
+    | "pairing"
+    | "connected"
+    | "disconnected"
+    | "error"
+    | "not_loaded"
+    | (string & {});
+  /**
+   * The last status written to the database. It survives a restart, so it can
+   * claim `connected` for a session that never came back — when it disagrees
+   * with `status`, `status` is the one that decides whether checks work.
+   */
+  stored_status?: string;
   total_lookups_performed: number;
   lookups_this_month: number;
   created_at: string;
@@ -398,6 +432,8 @@ export interface WhatsAppAccount {
 
 export interface WhatsAppAccountsResponse {
   accounts: WhatsAppAccount[];
+  /** How many accounts can serve a lookup right now. 0 means /check will fail. */
+  usable_accounts?: number;
 }
 
 export interface WhatsAppAccountInitResponse {

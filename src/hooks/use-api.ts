@@ -120,6 +120,16 @@ export function useSearchDetail(id: string | null) {
  * Per-call callbacks belong on `mutate(input, { onSuccess })` at the call
  * site; this hook owns only the cache invalidation.
  */
+/**
+ * The email-only check. Invalidates nothing: it writes no history row and
+ * spends no quota, so there is no server state for it to make stale.
+ */
+export function useCheckEmail() {
+  return useMutation({
+    mutationFn: (email: string) => verificationService.checkEmail(email),
+  });
+}
+
 export function useCheckNumber() {
   const queryClient = useQueryClient();
 

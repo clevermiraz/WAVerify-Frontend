@@ -148,6 +148,32 @@ export const NOT_FOUND_RESPONSE = `{
   "checked_at": "2026-07-23T10:04:12Z"
 }`;
 
+export const CHECK_EMAIL_SAMPLE = `curl -X POST ${ENDPOINT}/email \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: wav_live_your_api_key" \\
+  -d '{"email": "someone@example.com"}'`;
+
+export const CHECK_EMAIL_RESPONSE = `{
+  "success": true,
+  "email": "jane@acme.com",
+  "email_info": {
+    "email": "jane@acme.com",
+    "syntax_valid": true,
+    "domain": "acme.com",
+    "deliverable": true,
+    "mx_hosts": ["mx.acme.com"],
+    "disposable": false,
+    "role_account": false,
+    "free_provider": false,
+    "status": "valid",
+    "reason": null
+  },
+  "gravatar": null,
+  "response_time_ms": 96,
+  "cached": false,
+  "checked_at": "2026-07-29T10:04:11Z"
+}`;
+
 export const EMAIL_INFO_RESPONSE = `{
   "email": "jane@acme.com",
   "syntax_valid": true,

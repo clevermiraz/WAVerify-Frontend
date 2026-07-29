@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/table";
 import {
   API_BASE_URL,
+  CHECK_EMAIL_RESPONSE,
+  CHECK_EMAIL_SAMPLE,
   CHECK_SAMPLES,
   CHECK_WITH_EMAIL_SAMPLE,
   EMAIL_INFO_FIELDS,
@@ -59,8 +61,8 @@ export default function DocsPage() {
             </h1>
             <p className="text-muted-foreground mt-4 text-lg leading-relaxed">
               You send a phone number. We tell you if it has a WhatsApp
-              account, plus what we know about the number. That is the whole
-              API.
+              account, plus what we know about the number. You can check an
+              email too — alongside the number, or on its own.
             </p>
           </header>
 
@@ -313,6 +315,28 @@ export default function DocsPage() {
               apply. Those addresses do receive mail — that is exactly why they
               are worth flagging.
             </p>
+
+            <h3 className="mt-8 mb-3 font-medium">
+              Checking an email on its own
+            </h3>
+            <p>
+              If the email is all you have, post it to{" "}
+              <Code>/check/email</Code>. You get the same{" "}
+              <Code>email_info</Code>, plus any Gravatar profile — with no
+              phone number involved.
+            </p>
+            <p className="mt-4">
+              Two things make this route different. It never contacts WhatsApp,
+              so it keeps working even when a number check cannot. And it does
+              not use up any of your monthly requests — only the per-minute
+              rate limit applies.
+            </p>
+            <CodeBlock className="mt-5" code={CHECK_EMAIL_SAMPLE} />
+            <CodeBlock
+              className="mt-4"
+              code={CHECK_EMAIL_RESPONSE}
+              language="200 OK"
+            />
 
             <h3 className="mt-8 mb-3 font-medium">Gravatar profile</h3>
             <p>
